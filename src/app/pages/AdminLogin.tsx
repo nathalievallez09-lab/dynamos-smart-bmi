@@ -152,14 +152,6 @@ export function AdminLogin() {
                 Sign In
               </Button>
 
-              {/* Demo Credentials */}
-              <div className="mt-6 p-4 bg-[#a7ebf2]/10 rounded-lg border border-[#54acbf]/20">
-                <p className="text-xs text-[#026658c]/70 text-center">
-                  <span className="font-semibold">Demo Credentials:</span>
-                  <br />
-                  Username: admin | Password: admin123
-                </p>
-              </div>
             </form>
           </Card>
 
