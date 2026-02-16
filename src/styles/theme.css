@@ -1,0 +1,253 @@
+@custom-variant dark (&:is(.dark *));
+
+/* =========================================================
+   ROOT TOKENS (YOUR BRAND + IMPROVED STRUCTURE)
+   ========================================================= */
+:root {
+  --font-size: 16px;
+  --font-family: 'Inter', 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+
+  /* Brand Palette */
+  --color-light: #a7ebf2;
+  --color-medium: #54acbf;
+  --color-accent: #26658c;
+  --color-dark: #023859;
+  --color-darkest: #011c40;
+
+  /* Core UI */
+  --background: #ffffff;
+  --foreground: #011c40;
+
+  --card: #ffffff;
+  --card-foreground: #011c40;
+
+  --popover: #ffffff;
+  --popover-foreground: #011c40;
+
+  --primary: #023859;
+  --primary-foreground: #ffffff;
+
+  --secondary: #54acbf;
+  --secondary-foreground: #ffffff;
+
+  --muted: #a7ebf2;
+  --muted-foreground: #26658c;
+
+  --accent: #26658c;
+  --accent-foreground: #ffffff;
+
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+
+  --border: rgba(84, 172, 191, 0.2);
+  --ring: #54acbf;
+
+  --input: transparent;
+  --input-background: #f0f9fa;
+
+  /* NEW: SURFACES */
+  --surface: #f6fbfd;
+  --surface-elevated: #ffffff;
+  --surface-muted: #eef7fa;
+
+  /* NEW: SHADOWS (ELEVATION) */
+  --shadow-xs: 0 1px 2px rgba(1, 28, 64, 0.05);
+  --shadow-sm: 0 2px 6px rgba(1, 28, 64, 0.08);
+  --shadow-md: 0 6px 18px rgba(1, 28, 64, 0.12);
+  --shadow-lg: 0 12px 32px rgba(1, 28, 64, 0.18);
+
+  /* STATUS COLORS (BMI) */
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+
+  --chart-1: #54acbf;
+  --chart-2: #26658c;
+  --chart-3: #023859;
+  --chart-4: #a7ebf2;
+  --chart-5: #011c40;
+
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar: #023859;
+  --sidebar-foreground: #ffffff;
+  --sidebar-accent: #26658c;
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+}
+
+/* =========================================================
+   DARK MODE (FIXED — NOW MATCHES BRAND)
+   ========================================================= */
+.dark {
+  --background: #0b1726;
+  --foreground: #e6f0f7;
+
+  --card: #111f2f;
+  --card-foreground: #e6f0f7;
+
+  --popover: #111f2f;
+  --popover-foreground: #e6f0f7;
+
+  --primary: #54acbf;
+  --primary-foreground: #021018;
+
+  --secondary: #1b3c53;
+  --secondary-foreground: #e6f0f7;
+
+  --muted: #162b3b;
+  --muted-foreground: #8faec0;
+
+  --accent: #26658c;
+  --accent-foreground: #ffffff;
+
+  --border: rgba(255,255,255,0.08);
+
+  --surface: #0f2132;
+  --surface-elevated: #162b3b;
+  --surface-muted: #0b1726;
+
+  --sidebar: #091421;
+  --sidebar-foreground: #e6f0f7;
+}
+
+/* =========================================================
+   THEME MAPPING FOR TAILWIND
+   ========================================================= */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input-background: var(--input-background);
+  --color-ring: var(--ring);
+}
+
+/* =========================================================
+   BASE TYPOGRAPHY
+   ========================================================= */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  body {
+    font-family: var(--font-family);
+    color: var(--foreground);
+    background:
+      radial-gradient(circle at 10% 10%, rgba(84,172,191,0.08), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(38,101,140,0.08), transparent 40%),
+      var(--background);
+  }
+
+  h1 { font-size: 32px; font-weight: 600; }
+  h2 { font-size: 24px; font-weight: 600; }
+  h3 { font-size: 18px; font-weight: 600; }
+  h4 { font-size: 16px; font-weight: 600; }
+
+  label { font-size: 14px; font-weight: 500; }
+  input { font-size: 15px; }
+}
+
+/* =========================================================
+   COMPONENTS (THE PART YOU WERE MISSING)
+   ========================================================= */
+
+/* Cards */
+.card {
+  background: var(--surface-elevated);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: all .2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Inputs */
+input,
+select,
+textarea {
+  background: var(--input-background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all .15s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px rgba(84,172,191,0.25);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all .2s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  padding: 12px 18px;
+  border-radius: 12px;
+}
+
+/* BMI Status Badges */
+.badge-success {
+  background: rgba(22,163,74,0.12);
+  color: var(--success);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-warning {
+  background: rgba(245,158,11,0.12);
+  color: var(--warning);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.badge-danger {
+  background: rgba(220,38,38,0.12);
+  color: var(--danger);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
