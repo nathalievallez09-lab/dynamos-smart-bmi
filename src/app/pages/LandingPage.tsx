@@ -95,7 +95,7 @@ export function LandingPage() {
                 </span>
               </div>
               <div className="hidden md:flex items-center gap-8">
-                <a href="#about" className="text-white/90 hover:text-[#a7ebf2] transition-colors">About BMI</a>
+                <a href="#about" className="text-white/90 hover:text-[#a7ebf2] transition-colors">About</a>
                 <a href="#system" className="text-white/90 hover:text-[#a7ebf2] transition-colors">System</a>
                 <a href="#authors" className="text-white/90 hover:text-[#a7ebf2] transition-colors">Authors</a>
               </div>

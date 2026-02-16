@@ -10,7 +10,7 @@ interface User {
   age: number;
   sex: string;
   email: string;
-  lastMeasurement: string;
+  lastMeasurement?: string;
   totalRecords: number;
   currentBMI: number;
   status: "active" | "inactive";
@@ -75,9 +75,9 @@ const mockUsers: User[] = [
   },
 ];
 
-export function UserManagement() {
+export function UserManagement({ users: incomingUsers }: { users?: User[] }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [users] = useState<User[]>(mockUsers);
+  const users = incomingUsers && incomingUsers.length ? incomingUsers : mockUsers;
 
   const filteredUsers = users.filter(
     (user) =>
@@ -228,7 +228,9 @@ export function UserManagement() {
                     </td>
                     <td className="py-4 px-4">
                       <span className="text-sm text-[#026658c]">
-                        {new Date(user.lastMeasurement).toLocaleDateString()}
+                        {user.lastMeasurement
+                          ? new Date(user.lastMeasurement).toLocaleDateString()
+                          : "-"}
                       </span>
                     </td>
                     <td className="py-4 px-4">

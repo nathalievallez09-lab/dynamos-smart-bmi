@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard,
@@ -16,11 +16,32 @@ import { Button } from "../components/ui/button";
 import { UserManagement } from "../components/admin/UserManagement";
 import { SystemMonitoring } from "../components/admin/SystemMonitoring";
 import { AdminAnalytics } from "../components/admin/AdminAnalytics";
+import { getAdminOverview, getAdminUsers } from "../api/api-integration";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [adminName, setAdminName] = useState("Administrator");
+  const [stats, setStats] = useState([
+    { label: "Total Users", value: "82", change: "+9%", color: "#54acbf" },
+    { label: "Measurements Today", value: "28", change: "+12%", color: "#26658c" },
+    { label: "Active Sessions", value: "5", change: "Live", color: "#023859" },
+    { label: "System Health", value: "98.5%", change: "Excellent", color: "#26658c" },
+  ]);
+  const [users, setUsers] = useState<
+    Array<{
+      id: string;
+      name: string;
+      age: number;
+      sex: string;
+      email: string;
+      lastMeasurement?: string;
+      totalRecords: number;
+      currentBMI: number;
+      status: "active" | "inactive";
+    }>
+  >([]);
 
   useEffect(() => {
     // Check if admin is authenticated
@@ -28,19 +49,77 @@ export function AdminDashboard() {
     if (!token) {
       navigate("/admin/login");
     }
+    const storedName = localStorage.getItem("adminName");
+    if (storedName) {
+      setAdminName(storedName);
+    }
   }, [navigate]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadAdminData = async () => {
+      try {
+        const [overview, userList] = await Promise.all([
+          getAdminOverview(),
+          getAdminUsers(),
+        ]);
+        if (!isMounted) return;
+
+        setStats([
+          {
+            label: "Total Users",
+            value: String(overview.totalUsers),
+            change: `${overview.activeUsers} active`,
+            color: "#54acbf",
+          },
+          {
+            label: "Measurements Today",
+            value: String(overview.measurementsToday),
+            change: `${overview.totalMeasurements} total`,
+            color: "#26658c",
+          },
+          {
+            label: "Avg. BMI",
+            value: String(overview.avgBmi),
+            change: "Live",
+            color: "#023859",
+          },
+          {
+            label: "System Health",
+            value: `${overview.systemHealth}%`,
+            change: "Excellent",
+            color: "#26658c",
+          },
+        ]);
+
+        setUsers(
+          userList.users.map((item) => ({
+            id: item.id,
+            name: item.name,
+            age: item.age,
+            sex: item.sex,
+            email: item.email,
+            lastMeasurement: item.last_measurement,
+            totalRecords: Number(item.total_records),
+            currentBMI: Number(item.current_bmi),
+            status: item.status,
+          })),
+        );
+      } catch {
+        // Keep static cards as fallback.
+      }
+    };
+
+    loadAdminData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     navigate("/admin/login");
   };
-
-  const stats = [
-    { label: "Total Users", value: "82", change: "+9%", color: "#54acbf" },
-    { label: "Measurements Today", value: "28", change: "+12%", color: "#26658c" },
-    { label: "Active Sessions", value: "5", change: "Live", color: "#023859" },
-    { label: "System Health", value: "98.5%", change: "Excellent", color: "#26658c" },
-  ];
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -89,7 +168,7 @@ export function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right hidden md:block">
-              <p className="text-sm text-white/90 font-medium">Administrator</p>
+              <p className="text-sm text-white/90 font-medium">{adminName}</p>
               <p className="text-xs text-white/60">admin@mpc.edu.ph</p>
             </div>
             <Button
@@ -320,7 +399,7 @@ export function AdminDashboard() {
                 </motion.div>
               )}
 
-              {activeSection === "users" && <UserManagement />}
+              {activeSection === "users" && <UserManagement users={users} />}
               {activeSection === "monitoring" && <SystemMonitoring />}
               {activeSection === "analytics" && <AdminAnalytics />}
 

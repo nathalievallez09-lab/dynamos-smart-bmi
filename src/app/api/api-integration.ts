@@ -1,67 +1,99 @@
-// API Integration Helper
-// This file shows how to integrate your Neon database and backend API
+export type UserProfile = {
+  id: string;
+  name: string;
+  age: number;
+  sex: "Male" | "Female";
+  email?: string;
+  status?: "active" | "inactive";
+  current_bmi: number;
+  weight: number;
+  height: number;
+  last_updated?: string;
+};
 
-const API_BASE_URL = "http://localhost:5000"; // Update with your backend URL
-//const NEON_DB_URL = "postgresql://neondb_owner:npg_dr0Yge9iXLqM@ep-restless-mode-a1zx5bj0-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+export type BMIHistoryEntry = {
+  date: string;
+  bmi: number;
+  weight: number;
+  height: number;
+};
 
-// Example API calls to integrate with your backend:
+export type AdminOverview = {
+  totalUsers: number;
+  measurementsToday: number;
+  activeUsers: number;
+  totalMeasurements: number;
+  avgBmi: number;
+  systemHealth: number;
+};
 
-// 1. Get user data by ID
-export async function getUserData(userId: string, token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+export type AdminUserRow = {
+  id: string;
+  name: string;
+  age: number;
+  sex: "Male" | "Female";
+  email: string;
+  status: "active" | "inactive";
+  current_bmi: number;
+  total_records: number;
+  last_measurement?: string;
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
+      ...(init?.headers || {}),
     },
+    ...init,
   });
-  return response.json();
+
+  const data = (await response.json().catch(() => ({}))) as T & {
+    error?: string;
+  };
+
+  if (!response.ok) {
+    const message = (data as { error?: string }).error || "API request failed";
+    throw new Error(message);
+  }
+
+  return data;
 }
 
-// 2. Get BMI history for a user
-export async function getBMIHistory(userId: string, token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/users/${userId}/bmi-history`, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+export async function adminLogin(username: string, password: string) {
+  return request<{ token: string; admin: { username: string; full_name: string } }>(
+    "/api/admin/login",
+    {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
     },
-  });
-  return response.json();
+  );
 }
 
-// 3. Update user profile
-export async function updateUserProfile(userId: string, data: any, token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  return response.json();
+export async function getUserData(userId: string) {
+  return request<{ user: UserProfile }>(`/api/users/${userId}`);
 }
 
-// 4. Add new BMI record (from Arduino/Raspberry Pi)
-export async function addBMIRecord(userId: string, data: any, token: string) {
-  const response = await fetch(`${API_BASE_URL}/api/bmi-records`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      userId,
-      ...data,
-    }),
-  });
-  return response.json();
+export async function getBMIHistory(userId: string) {
+  return request<{ history: BMIHistoryEntry[] }>(`/api/users/${userId}/bmi-history`);
 }
 
-// To use these functions in your components:
-// 1. Import the function: import { getUserData } from '../api/api-integration';
-// 2. Call it in useEffect or event handlers:
-//    const data = await getUserData(userId, 'YOUR_JWT_TOKEN');
-// 3. Update state with the returned data
+export async function updateUserProfile(userId: string, data: { name: string }) {
+  return request<{ user: Pick<UserProfile, "id" | "name" | "age" | "sex" | "email" | "status"> }>(
+    `/api/users/${userId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(data),
+    },
+  );
+}
 
-// Note: Currently using mock data in Dashboard.tsx
-// Replace the mockUserData with actual API calls when backend is ready
+export async function getAdminOverview() {
+  return request<AdminOverview>("/api/admin/overview");
+}
+
+export async function getAdminUsers() {
+  return request<{ users: AdminUserRow[] }>("/api/admin/users");
+}

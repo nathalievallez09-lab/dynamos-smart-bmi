@@ -23,8 +23,12 @@ import { BMIGauge } from "../components/BMIGauge";
 import { BMIHistoryChart } from "../components/BMIHistoryChart";
 import { BMIAnalytics } from "../components/BMIAnalytics";
 import { HealthTips } from "../components/HealthTips";
+import {
+  getBMIHistory,
+  getUserData,
+  updateUserProfile,
+} from "../api/api-integration";
 
-// Mock user data (replace with backend API in production)
 const mockUserData = {
   id: "12345",
   name: "Juan Dela Cruz",
@@ -79,19 +83,75 @@ export function Dashboard() {
 
   const [activeSection, setActiveSection] = useState("overview");
   const [userData, setUserData] = useState(mockUserData);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedName, setEditedName] = useState(userData.name);
 
   useEffect(() => {
-    console.log("Fetching data for user:", userId);
-    // TODO: Fetch real user data via API
+    if (!userId) return;
+
+    let isMounted = true;
+    const loadUserData = async () => {
+      setIsLoading(true);
+      try {
+        const [userResponse, historyResponse] = await Promise.all([
+          getUserData(userId),
+          getBMIHistory(userId),
+        ]);
+
+        if (!isMounted) return;
+        const user = userResponse.user;
+        const history = historyResponse.history || [];
+
+        setUserData({
+          id: user.id,
+          name: user.name,
+          age: user.age,
+          sex: user.sex,
+          currentBMI: Number(user.current_bmi),
+          height: Number(user.height),
+          weight: Number(user.weight),
+          category: "Normal",
+          lastUpdated: user.last_updated || new Date().toISOString(),
+          history: history.map((item) => ({
+            date: item.date,
+            bmi: Number(item.bmi),
+            weight: Number(item.weight),
+            height: Number(item.height),
+          })),
+        });
+      } catch {
+        if (!isMounted) return;
+        // Keep mock dataset as fallback for local demos.
+        setUserData((prev) => ({ ...prev, id: userId }));
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadUserData();
+    return () => {
+      isMounted = false;
+    };
   }, [userId]);
+
+  useEffect(() => {
+    setEditedName(userData.name);
+  }, [userData.name]);
 
   const handleLogout = () => navigate("/");
 
-  const handleSaveProfile = () => {
-    setUserData({ ...userData, name: editedName });
-    setIsEditingProfile(false);
+  const handleSaveProfile = async () => {
+    try {
+      if (userId) {
+        await updateUserProfile(userId, { name: editedName });
+      }
+    } catch {
+      // Keep UI usable even if API update fails.
+    } finally {
+      setUserData({ ...userData, name: editedName });
+      setIsEditingProfile(false);
+    }
   };
 
   const getBMICategory = (bmi: number) => {
@@ -106,6 +166,11 @@ export function Dashboard() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <DashboardBackground />
+      {isLoading && (
+        <div className="fixed top-24 right-6 z-50 rounded-md bg-[#023859] px-3 py-2 text-sm text-white">
+          Loading user data...
+        </div>
+      )}
 
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-[#023859]/95 backdrop-blur-md shadow-lg">

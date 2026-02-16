@@ -6,6 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
+import { adminLogin } from "../api/api-integration";
 
 export function AdminLogin() {
   const [username, setUsername] = useState("");
@@ -14,14 +15,22 @@ export function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Mock authentication - in production, this would call your backend API
-    if (username === "admin" && password === "admin123") {
-      localStorage.setItem("adminToken", "mock-admin-token");
+
+    try {
+      const response = await adminLogin(username, password);
+      localStorage.setItem("adminToken", response.token);
+      localStorage.setItem("adminName", response.admin.full_name);
       navigate("/admin/dashboard");
-    } else {
+    } catch {
+      // Fallback demo mode for local/offline runs.
+      if (username === "admin" && password === "admin123") {
+        localStorage.setItem("adminToken", "mock-admin-token");
+        localStorage.setItem("adminName", "System Administrator");
+        navigate("/admin/dashboard");
+        return;
+      }
       setError("Invalid username or password");
     }
   };
