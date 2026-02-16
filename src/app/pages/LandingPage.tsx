@@ -117,7 +117,7 @@ export function LandingPage() {
         </nav>
 
         {/* Hero Section */}
-        <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <section className="relative pt-24 sm:pt-28 md:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
           <div className="relative z-10 max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -129,17 +129,17 @@ export function LandingPage() {
                 <span className="text-[#026658c] font-medium">Automated Health Monitoring</span>
               </div>
 
-              <h1 className="text-5xl md:text-6xl font-bold text-[#011c40] mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-[#011c40] mb-4 sm:mb-6 leading-tight">
                 Know Your Body,<br />
                 <span className="text-[#26658c]">Know Your Health</span>
               </h1>
 
-              <p className="text-xl text-[#023859]/80 mb-12 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-[#023859]/80 mb-8 sm:mb-12 max-w-2xl mx-auto">
                 Advanced BMI calculation system with facial recognition, real-time measurements,
                 and comprehensive health analytics for students and faculty.
               </p>
 
-              <Card className="max-w-md mx-auto p-8 bg-white shadow-xl border-[#54acbf]/20">
+              <Card className="max-w-md mx-auto p-5 sm:p-8 bg-white shadow-xl border-[#54acbf]/20">
                 <div className="flex items-center gap-3 mb-6">
                   <Users className="w-6 h-6 text-[#54acbf]" />
                   <h3 className="text-xl font-semibold text-[#023859]">Access Your Dashboard</h3>
@@ -147,7 +147,7 @@ export function LandingPage() {
                 <p className="text-[#026658c]/70 mb-4 text-sm">
                   Enter your 5-digit User ID to view your BMI records and analytics
                 </p>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Input
                     type="text"
                     placeholder="Enter 5-digit ID"
@@ -158,13 +158,13 @@ export function LandingPage() {
                       setIdError("");
                     }}
                     onKeyPress={handleKeyPress}
-                    className="text-center text-lg tracking-widest bg-[#f0f9fa] border-[#54acbf]/30 focus:border-[#54acbf]"
+                    className="text-center text-base sm:text-lg tracking-widest bg-[#f0f9fa] border-[#54acbf]/30 focus:border-[#54acbf]"
                     maxLength={5}
                   />
                   <Button
                     onClick={handleAccessDashboard}
                     disabled={isCheckingId}
-                    className="bg-[#54acbf] hover:bg-[#26658c] text-white transition-all duration-300 shadow-lg hover:shadow-xl px-8"
+                    className="bg-[#54acbf] hover:bg-[#26658c] text-white transition-all duration-300 shadow-lg hover:shadow-xl px-8 w-full sm:w-auto"
                   >
                     {isCheckingId ? "Checking..." : "Access"}
                   </Button>
