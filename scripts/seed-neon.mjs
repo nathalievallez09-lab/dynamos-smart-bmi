@@ -19,8 +19,19 @@ async function run() {
   const seedSql = await fs.readFile(seedPath, "utf8");
 
   const sql = neon(databaseUrl);
-  await sql.query(schemaSql);
-  await sql.query(seedSql);
+  const executeSqlFile = async (rawSql) => {
+    const statements = rawSql
+      .split(/;\s*(?:\r?\n|$)/g)
+      .map((statement) => statement.trim())
+      .filter(Boolean);
+
+    for (const statement of statements) {
+      await sql.query(statement);
+    }
+  };
+
+  await executeSqlFile(schemaSql);
+  await executeSqlFile(seedSql);
 
   console.log("Neon database schema + seed applied successfully.");
 }

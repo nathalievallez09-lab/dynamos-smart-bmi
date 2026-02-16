@@ -84,6 +84,7 @@ export function Dashboard() {
   const [activeSection, setActiveSection] = useState("overview");
   const [userData, setUserData] = useState(mockUserData);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedName, setEditedName] = useState(userData.name);
 
@@ -93,6 +94,7 @@ export function Dashboard() {
     let isMounted = true;
     const loadUserData = async () => {
       setIsLoading(true);
+      setLoadError("");
       try {
         const [userResponse, historyResponse] = await Promise.all([
           getUserData(userId),
@@ -120,10 +122,13 @@ export function Dashboard() {
             height: Number(item.height),
           })),
         });
-      } catch {
+      } catch (error) {
         if (!isMounted) return;
-        // Keep mock dataset as fallback for local demos.
-        setUserData((prev) => ({ ...prev, id: userId }));
+        const message =
+          error instanceof Error ? error.message : "Unable to load user data.";
+        setLoadError(message.toLowerCase().includes("not found")
+          ? "User ID not found in database."
+          : "Unable to load user data from the database.");
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -195,6 +200,20 @@ export function Dashboard() {
 
       {/* Main Layout */}
       <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 relative z-10 max-w-7xl mx-auto">
+        {loadError && (
+          <Card className="mb-6 p-6 border-red-200 bg-red-50">
+            <h2 className="text-xl font-semibold text-red-700">Dashboard Unavailable</h2>
+            <p className="mt-2 text-red-600">{loadError}</p>
+            <Button
+              onClick={() => navigate("/")}
+              className="mt-4 bg-[#023859] hover:bg-[#26658c] text-white"
+            >
+              Back to Home
+            </Button>
+          </Card>
+        )}
+
+        {!loadError && (
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Sidebar */}
           <motion.div
@@ -412,6 +431,7 @@ export function Dashboard() {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

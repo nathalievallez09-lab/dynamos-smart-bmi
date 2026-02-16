@@ -9,6 +9,7 @@ import { BMIStatistics } from "../components/BMIStatistics";
 import { SystemArchitecture } from "../components/SystemArchitecture";
 import { Authors } from "../components/Authors";
 import { Footer } from "../components/Footer";
+import { getUserData } from "../api/api-integration";
 
 // --- Animated Background as a child component ---
 function AnimatedBackground() {
@@ -62,19 +63,31 @@ function AnimatedBackground() {
 
 export function LandingPage() {
   const [userId, setUserId] = useState("");
+  const [idError, setIdError] = useState("");
+  const [isCheckingId, setIsCheckingId] = useState(false);
   const navigate = useNavigate();
 
-  const handleAccessDashboard = () => {
-    if (userId.length === 5 && /^\d+$/.test(userId)) {
+  const handleAccessDashboard = async () => {
+    if (!(userId.length === 5 && /^\d+$/.test(userId))) {
+      setIdError("Please enter a valid 5-digit User ID.");
+      return;
+    }
+
+    setIdError("");
+    setIsCheckingId(true);
+    try {
+      await getUserData(userId);
       navigate(`/dashboard/${userId}`);
-    } else {
-      alert("Please enter a valid 5-digit User ID");
+    } catch {
+      setIdError("User ID not found in the database.");
+    } finally {
+      setIsCheckingId(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleAccessDashboard();
+      await handleAccessDashboard();
     }
   };
 
@@ -142,6 +155,7 @@ export function LandingPage() {
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, "").slice(0, 5);
                       setUserId(value);
+                      setIdError("");
                     }}
                     onKeyPress={handleKeyPress}
                     className="text-center text-lg tracking-widest bg-[#f0f9fa] border-[#54acbf]/30 focus:border-[#54acbf]"
@@ -149,11 +163,15 @@ export function LandingPage() {
                   />
                   <Button
                     onClick={handleAccessDashboard}
+                    disabled={isCheckingId}
                     className="bg-[#54acbf] hover:bg-[#26658c] text-white transition-all duration-300 shadow-lg hover:shadow-xl px-8"
                   >
-                    Access
+                    {isCheckingId ? "Checking..." : "Access"}
                   </Button>
                 </div>
+                {idError && (
+                  <p className="mt-3 text-sm text-red-600 text-left">{idError}</p>
+                )}
               </Card>
             </motion.div>
           </div>

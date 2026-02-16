@@ -24,13 +24,6 @@ export function AdminLogin() {
       localStorage.setItem("adminName", response.admin.full_name);
       navigate("/admin/dashboard");
     } catch {
-      // Fallback demo mode for local/offline runs.
-      if (username === "admin" && password === "admin123") {
-        localStorage.setItem("adminToken", "mock-admin-token");
-        localStorage.setItem("adminName", "System Administrator");
-        navigate("/admin/dashboard");
-        return;
-      }
       setError("Invalid username or password");
     }
   };
