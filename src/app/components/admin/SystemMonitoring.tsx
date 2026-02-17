@@ -33,7 +33,7 @@ const systemLoad = [
 export function SystemMonitoring() {
   return (
     <div className="space-y-6">
-      <Card className="p-6 border-[#54acbf]/20">
+      <Card className="p-6 glass-card">
         <h2 className="text-2xl font-bold text-[#023859] mb-6">System Monitoring</h2>
 
         {/* System Health Overview */}
@@ -194,7 +194,7 @@ export function SystemMonitoring() {
       </Card>
 
       {/* System Alerts */}
-      <Card className="p-6 border-[#54acbf]/20">
+      <Card className="p-6 glass-card">
         <h3 className="text-lg font-semibold text-[#023859] mb-4">System Alerts</h3>
         <div className="space-y-3">
           <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">

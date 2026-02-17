@@ -29,7 +29,7 @@ export function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden tech-surface">
       {/* Animated Gradient Background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#023859] via-[#26658c] to-[#011c40]" />
@@ -47,15 +47,7 @@ export function AdminLogin() {
         />
 
         {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.05]">
-          <div
-            className="h-full w-full"
-            style={{
-              backgroundImage: `linear-gradient(#a7ebf2 1px, transparent 1px), linear-gradient(90deg, #a7ebf2 1px, transparent 1px)`,
-              backgroundSize: "40px 40px",
-            }}
-          />
-        </div>
+        <div className="absolute inset-0 opacity-[0.12] tech-grid" />
       </div>
 
       {/* Login Content */}
@@ -68,15 +60,15 @@ export function AdminLogin() {
         >
           {/* Logo/Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-[#54acbf] rounded-full mb-4">
-              <Activity className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-full mb-4 glow-ring">
+              <Activity className="w-7 h-7 text-[#54acbf]" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">Admin Portal</h1>
             <p className="text-white/70">Smart BMI System Administration</p>
           </div>
 
           {/* Login Card */}
-          <Card className="p-8 bg-white/95 backdrop-blur-sm border-[#54acbf]/20 shadow-2xl">
+          <Card className="p-8 glass-card">
             <form onSubmit={handleLogin} className="space-y-6 relative">
               {/* Username */}
               <div>

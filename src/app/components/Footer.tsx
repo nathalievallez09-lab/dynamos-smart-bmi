@@ -2,14 +2,19 @@ import { Heart, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Shield } from
 
 export function Footer() {
   return (
-    <footer className="bg-[#023859] text-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <footer className="relative text-white py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="absolute inset-0 bg-[#023859]" />
+      <div className="absolute inset-0 tech-grid opacity-[0.12]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#023859]/95 via-[#26658c]/80 to-[#023859]/95" />
+      <div className="relative max-w-7xl mx-auto">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <Heart className="w-6 h-6 text-[#54acbf]" />
-              <span className="text-lg font-semibold">Smart BMI System</span>
+              <div className="p-2 rounded-full bg-white/10 glow-ring">
+                <Heart className="w-5 h-5 text-[#54acbf]" />
+              </div>
+              <span className="text-lg font-semibold tracking-tight">Smart BMI System</span>
             </div>
             <p className="text-white/70 text-sm">
               Automated health monitoring for a healthier community.
@@ -98,21 +103,21 @@ export function Footer() {
         <div className="flex items-center justify-center gap-4 mb-8 pt-8 border-t border-white/10">
           <a
             href="#"
-            className="p-2 rounded-full bg-white/10 hover:bg-[#54acbf] transition-colors"
+            className="p-2 rounded-full bg-white/10 hover:bg-[#54acbf] transition-colors glow-ring"
             aria-label="Facebook"
           >
             <Facebook className="w-5 h-5" />
           </a>
           <a
             href="#"
-            className="p-2 rounded-full bg-white/10 hover:bg-[#54acbf] transition-colors"
+            className="p-2 rounded-full bg-white/10 hover:bg-[#54acbf] transition-colors glow-ring"
             aria-label="Twitter"
           >
             <Twitter className="w-5 h-5" />
           </a>
           <a
             href="#"
-            className="p-2 rounded-full bg-white/10 hover:bg-[#54acbf] transition-colors"
+            className="p-2 rounded-full bg-white/10 hover:bg-[#54acbf] transition-colors glow-ring"
             aria-label="Instagram"
           >
             <Instagram className="w-5 h-5" />
@@ -122,7 +127,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="text-center text-sm text-white/60">
           <p>
-            © {new Date().getFullYear()} Marikina Polytechnic College. All rights reserved.
+            (c) {new Date().getFullYear()} Marikina Polytechnic College. All rights reserved.
           </p>
           <p className="mt-1">
             Dynamos - Academic Research Capstone

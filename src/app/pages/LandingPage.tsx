@@ -92,18 +92,20 @@ export function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
+    <div className="min-h-screen tech-surface relative overflow-hidden">
       <AnimatedBackground />
 
       {/* Main content */}
       <div className="relative z-10">
         {/* Navbar */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#023859]/95 backdrop-blur-md shadow-lg">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#023859]/90 backdrop-blur-xl shadow-[0_12px_30px_rgba(2,56,89,0.35)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-3">
-                <Activity className="w-8 h-8 text-[#54acbf]" />
-                <span className="text-xl font-semibold text-white">
+                <div className="p-2 rounded-full bg-white/10 glow-ring">
+                  <Activity className="w-5 h-5 text-[#54acbf]" />
+                </div>
+                <span className="text-xl font-semibold text-white tracking-tight">
                   Smart BMI System
                 </span>
               </div>
@@ -124,12 +126,12 @@ export function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <div className="inline-flex items-center gap-2 bg-[#54acbf]/10 px-4 py-2 rounded-full mb-6">
+              <div className="inline-flex items-center gap-2 tech-chip px-4 py-2 rounded-full mb-6">
                 <Heart className="w-5 h-5 text-[#26658c]" />
-                <span className="text-[#026658c] font-medium">Automated Health Monitoring</span>
+                <span className="text-[#26658c] font-medium">Automated Health Monitoring</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-[#011c40] mb-4 sm:mb-6 leading-tight">
+              <h1 className="section-title text-3xl sm:text-4xl md:text-6xl font-bold text-[#011c40] mb-4 sm:mb-6 leading-tight">
                 Know Your Body,<br />
                 <span className="text-[#26658c]">Know Your Health</span>
               </h1>
@@ -139,9 +141,11 @@ export function LandingPage() {
                 and comprehensive health analytics for students and faculty.
               </p>
 
-              <Card className="max-w-md mx-auto p-5 sm:p-8 bg-white shadow-xl border-[#54acbf]/20">
+              <Card className="max-w-md mx-auto p-5 sm:p-8 glass-card">
                 <div className="flex items-center gap-3 mb-6">
-                  <Users className="w-6 h-6 text-[#54acbf]" />
+                  <div className="p-2 rounded-lg bg-[#54acbf]/15">
+                    <Users className="w-5 h-5 text-[#54acbf]" />
+                  </div>
                   <h3 className="text-xl font-semibold text-[#023859]">Access Your Dashboard</h3>
                 </div>
                 <p className="text-[#026658c]/70 mb-4 text-sm">
@@ -158,13 +162,13 @@ export function LandingPage() {
                       setIdError("");
                     }}
                     onKeyPress={handleKeyPress}
-                    className="text-center text-base sm:text-lg tracking-widest bg-[#f0f9fa] border-[#54acbf]/30 focus:border-[#54acbf]"
+                    className="text-center text-base sm:text-lg tracking-widest bg-white/70 border-[#54acbf]/30 focus:border-[#54acbf]"
                     maxLength={5}
                   />
                   <Button
                     onClick={handleAccessDashboard}
                     disabled={isCheckingId}
-                    className="bg-[#54acbf] hover:bg-[#26658c] text-white transition-all duration-300 shadow-lg hover:shadow-xl px-8 w-full sm:w-auto"
+                    className="bg-[#54acbf] hover:bg-[#26658c] text-white transition-all duration-300 shadow-[0_10px_24px_rgba(84,172,191,0.35)] hover:shadow-[0_14px_30px_rgba(84,172,191,0.4)] px-8 w-full sm:w-auto"
                   >
                     {isCheckingId ? "Checking..." : "Access"}
                   </Button>
@@ -183,7 +187,7 @@ export function LandingPage() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="relative z-10 max-w-6xl mx-auto mt-20 grid md:grid-cols-3 gap-6 px-4"
           >
-            <Card className="p-6 bg-white/80 backdrop-blur-sm border-[#54acbf]/20 hover:shadow-lg transition-shadow">
+            <Card className="p-6 glass-card hover:shadow-[0_18px_36px_rgba(2,56,89,0.2)] transition-shadow">
               <Scale className="w-12 h-12 text-[#54acbf] mb-4" />
               <h3 className="text-lg font-semibold text-[#023859] mb-2">Accurate Measurements</h3>
               <p className="text-[#026658c]/70 text-sm">
@@ -191,7 +195,7 @@ export function LandingPage() {
               </p>
             </Card>
 
-            <Card className="p-6 bg-white/80 backdrop-blur-sm border-[#54acbf]/20 hover:shadow-lg transition-shadow">
+            <Card className="p-6 glass-card hover:shadow-[0_18px_36px_rgba(2,56,89,0.2)] transition-shadow">
               <Award className="w-12 h-12 text-[#26658c] mb-4" />
               <h3 className="text-lg font-semibold text-[#023859] mb-2">Facial Recognition</h3>
               <p className="text-[#026658c]/70 text-sm">
@@ -199,7 +203,7 @@ export function LandingPage() {
               </p>
             </Card>
 
-            <Card className="p-6 bg-white/80 backdrop-blur-sm border-[#54acbf]/20 hover:shadow-lg transition-shadow">
+            <Card className="p-6 glass-card hover:shadow-[0_18px_36px_rgba(2,56,89,0.2)] transition-shadow">
               <TrendingUp className="w-12 h-12 text-[#023859] mb-4" />
               <h3 className="text-lg font-semibold text-[#023859] mb-2">Real-Time Analytics</h3>
               <p className="text-[#026658c]/70 text-sm">

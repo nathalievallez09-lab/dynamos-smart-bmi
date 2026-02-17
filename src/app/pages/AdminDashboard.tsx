@@ -122,7 +122,7 @@ export function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden tech-surface">
       {/* Animated Background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#a7ebf2]/20 via-white to-[#54acbf]/10" />
@@ -149,7 +149,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Top Navigation Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#023859]/95 backdrop-blur-md shadow-lg">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#023859]/90 backdrop-blur-xl shadow-[0_12px_30px_rgba(2,56,89,0.35)]">
         <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -197,7 +197,7 @@ export function AdminDashboard() {
               transition={{ duration: 0.3 }}
               className={`w-64 flex-shrink-0 ${isSidebarOpen ? 'block' : 'hidden'} lg:block`}
             >
-              <Card className="p-6 bg-white sticky top-28 border-[#54acbf]/20">
+              <Card className="p-6 glass-card sticky top-28">
                 <nav className="space-y-2">
                   <button
                     onClick={() => setActiveSection("overview")}
@@ -303,7 +303,7 @@ export function AdminDashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: index * 0.1 }}
                       >
-                        <Card className="p-6 border-[#54acbf]/20 hover:shadow-lg transition-shadow">
+                        <Card className="p-6 glass-card hover:shadow-[0_18px_36px_rgba(2,56,89,0.2)] transition-shadow">
                           <div className="flex items-start justify-between mb-4">
                             <div>
                               <p className="text-sm text-[#026658c]/70 mb-1">
@@ -336,7 +336,7 @@ export function AdminDashboard() {
 
                   {/* Quick Overview Sections */}
                   <div className="grid lg:grid-cols-2 gap-6">
-                    <Card className="p-6 border-[#54acbf]/20">
+                    <Card className="p-6 glass-card">
                       <h3 className="text-lg font-semibold text-[#023859] mb-4">
                         Recent Activity
                       </h3>
@@ -365,7 +365,7 @@ export function AdminDashboard() {
                       </div>
                     </Card>
 
-                    <Card className="p-6 border-[#54acbf]/20">
+                    <Card className="p-6 glass-card">
                       <h3 className="text-lg font-semibold text-[#023859] mb-4">
                         System Status
                       </h3>
@@ -409,7 +409,7 @@ export function AdminDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Card className="p-8 border-[#54acbf]/20">
+                  <Card className="p-8 glass-card">
                     <h2 className="text-2xl font-bold text-[#023859] mb-6">
                       System Settings
                     </h2>

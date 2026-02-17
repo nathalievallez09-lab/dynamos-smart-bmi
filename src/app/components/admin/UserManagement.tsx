@@ -95,7 +95,7 @@ export function UserManagement({ users: incomingUsers }: { users?: User[] }) {
 
   return (
     <div className="space-y-6">
-      <Card className="p-6 border-[#54acbf]/20">
+      <Card className="p-6 glass-card">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-[#023859]">User Management</h2>

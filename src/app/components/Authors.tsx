@@ -58,17 +58,18 @@ export function Authors() {
   return (
     <section
       id="authors"
-      className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#a7ebf2]/10 to-white"
+      className="py-20 px-4 sm:px-6 lg:px-8 relative"
     >
+      <div className="absolute inset-0 tech-grid opacity-[0.18]" />
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-4"
+          className="text-center mb-4 relative z-10"
         >
-          <h2 className="text-4xl font-bold text-[#011c40] mb-4">Meet the Team</h2>
+          <h2 className="section-title text-4xl font-bold text-[#011c40] mb-4">Meet the Team</h2>
           <p className="text-lg text-[#026658c]/80 max-w-2xl mx-auto mb-8">
             Electronics Engineering students from Marikina Polytechnic College dedicated to innovative health technology solutions.
           </p>
@@ -81,7 +82,7 @@ export function Authors() {
           </div>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-8 relative z-10">
           {authors.map((author, index) => (
             <motion.div
               key={author.name}
@@ -90,8 +91,8 @@ export function Authors() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Card className="p-6 h-full bg-white border-[#54acbf]/20 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-[#54acbf]">
+              <Card className="p-6 h-full glass-card hover:shadow-[0_18px_36px_rgba(2,56,89,0.2)] transition-all duration-300 hover:-translate-y-1">
+                <div className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-[#54acbf] glow-ring">
                   <ImageWithFallback src={author.image} alt={author.name} className="w-full h-full object-cover" />
                 </div>
 
@@ -102,7 +103,7 @@ export function Authors() {
                 <div className="flex justify-center gap-3 pt-4 border-t border-[#54acbf]/20">
                   <a
                     href={`mailto:${author.email}`}
-                    className="p-2 rounded-full bg-[#a7ebf2]/20 hover:bg-[#54acbf] text-[#026658c] hover:text-white transition-colors"
+                    className="p-2 rounded-full tech-chip hover:bg-[#54acbf] text-[#026658c] hover:text-white transition-colors"
                     title="Email"
                   >
                     <Mail className="w-5 h-5" />
@@ -111,7 +112,7 @@ export function Authors() {
                     href={author.facebook || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-full bg-[#a7ebf2]/20 hover:bg-[#54acbf] text-[#026658c] hover:text-white transition-colors"
+                    className="p-2 rounded-full tech-chip hover:bg-[#54acbf] text-[#026658c] hover:text-white transition-colors"
                     title="Facebook"
                   >
                     <Facebook className="w-5 h-5" />
@@ -127,9 +128,9 @@ export function Authors() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mt-12"
+          className="mt-12 relative z-10"
         >
-          <Card className="overflow-hidden border-[#54acbf]/20">
+          <Card className="overflow-hidden glass-card">
             <div className="relative h-64 md:h-80">
               <ImageWithFallback
                 src="https://i0.wp.com/mpc.edu.ph/wp-content/uploads/2024/01/marikina-polytechnic-college-gate.jpg?fit=1200%2C720&ssl=1&w=640"

@@ -51,7 +51,7 @@ const genderDistribution = [
 export function AdminAnalytics() {
   return (
     <div className="space-y-6">
-      <Card className="p-6 border-[#54acbf]/20">
+      <Card className="p-6 glass-card">
         <h2 className="text-2xl font-bold text-[#023859] mb-6">Analytics & Reports</h2>
 
         {/* Key Metrics */}
@@ -239,7 +239,7 @@ export function AdminAnalytics() {
       </Card>
 
       {/* Insights & Recommendations */}
-      <Card className="p-6 bg-gradient-to-r from-[#a7ebf2]/20 to-white border-[#54acbf]/20">
+      <Card className="p-6 glass-card bg-gradient-to-r from-[#a7ebf2]/15 to-white/80">
         <h3 className="text-lg font-semibold text-[#023859] mb-4">Key Insights</h3>
         <div className="space-y-3">
           <div className="flex items-start gap-3 p-4 bg-white rounded-lg border border-[#54acbf]/20">

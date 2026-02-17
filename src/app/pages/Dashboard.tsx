@@ -169,7 +169,7 @@ export function Dashboard() {
   const category = getBMICategory(userData.currentBMI);
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden tech-surface">
       <DashboardBackground />
       {isLoading && (
         <div className="fixed top-24 right-6 z-50 rounded-md bg-[#023859] px-3 py-2 text-sm text-white">
@@ -178,7 +178,7 @@ export function Dashboard() {
       )}
 
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#023859]/95 backdrop-blur-md shadow-lg">
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#023859]/90 backdrop-blur-xl shadow-[0_12px_30px_rgba(2,56,89,0.35)]">
         <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Activity className="w-8 h-8 text-[#54acbf]" />
@@ -222,7 +222,7 @@ export function Dashboard() {
             transition={{ duration: 0.5 }}
             className="lg:col-span-1"
           >
-            <Card className="p-6 bg-white sticky top-28 border-[#54acbf]/20">
+            <Card className="p-6 glass-card sticky top-28">
               <nav className="space-y-2">
                 {[
                   { id: "overview", icon: <Activity className="w-5 h-5" />, label: "Overview" },
@@ -278,7 +278,7 @@ export function Dashboard() {
 
                 {/* Current BMI */}
                 <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="p-6 border-[#54acbf]/20">
+                  <Card className="p-6 glass-card">
                     <h3 className="text-lg font-semibold text-[#023859] mb-4 flex items-center gap-2">
                       <Heart className="w-5 h-5 text-[#54acbf]" /> Current BMI
                     </h3>
@@ -300,7 +300,7 @@ export function Dashboard() {
                       { icon: <Scale className="w-6 h-6 text-[#54acbf]" />, label: "Weight", value: `${userData.weight} kg` },
                       { icon: <Ruler className="w-6 h-6 text-[#26658c]" />, label: "Height", value: `${userData.height} cm` },
                     ].map((item, idx) => (
-                      <Card key={idx} className="p-6 border-[#54acbf]/20">
+                      <Card key={idx} className="p-6 glass-card">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="p-3 bg-[#a7ebf2]/20 rounded-lg">{item.icon}</div>
                           <div className="flex-1">
@@ -322,7 +322,7 @@ export function Dashboard() {
             {activeSection === "profile" && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 {/* Profile Section */}
-                <Card className="p-8 border-[#54acbf]/20 space-y-6">
+                <Card className="p-8 glass-card space-y-6">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-[#023859]">Profile Information</h2>
                     {!isEditingProfile ? (
@@ -387,7 +387,7 @@ export function Dashboard() {
 
             {activeSection === "history" && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-                <Card className="p-6 border-[#54acbf]/20">
+                <Card className="p-6 glass-card">
                   <h2 className="text-2xl font-bold text-[#023859] mb-6">BMI History Records</h2>
                   <div className="space-y-3">
                     {userData.history.map((record, idx) => {

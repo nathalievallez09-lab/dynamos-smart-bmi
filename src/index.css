@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,4 +7,61 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+@layer base {
+  :root {
+    --c-ink: #011c40;
+    --c-deep: #023859;
+    --c-core: #26658c;
+    --c-accent: #54acbf;
+    --c-mist: #a7ebf2;
+  }
+
+  body {
+    font-family: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: var(--c-ink);
+    background-color: #f8fbfd;
+  }
+
+  code,
+  pre,
+  .font-mono {
+    font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+}
+
+@layer components {
+  .tech-grid {
+    background-image:
+      linear-gradient(rgba(84, 172, 191, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(84, 172, 191, 0.08) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .tech-surface {
+    background: radial-gradient(1200px 600px at 10% 0%, rgba(167, 235, 242, 0.3), transparent 60%),
+      radial-gradient(900px 500px at 95% 10%, rgba(84, 172, 191, 0.25), transparent 60%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 253, 0.95));
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(84, 172, 191, 0.24);
+    box-shadow: 0 20px 40px rgba(2, 56, 89, 0.12), 0 6px 16px rgba(2, 56, 89, 0.08);
+    backdrop-filter: blur(14px);
+  }
+
+  .glow-ring {
+    box-shadow: 0 0 0 1px rgba(84, 172, 191, 0.35), 0 0 24px rgba(84, 172, 191, 0.35);
+  }
+
+  .tech-chip {
+    border: 1px solid rgba(84, 172, 191, 0.35);
+    background: rgba(84, 172, 191, 0.12);
+  }
+
+  .section-title {
+    letter-spacing: -0.02em;
+  }
 }
