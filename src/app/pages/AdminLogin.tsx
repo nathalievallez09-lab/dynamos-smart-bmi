@@ -22,6 +22,7 @@ export function AdminLogin() {
       const response = await adminLogin(username, password);
       localStorage.setItem("adminToken", response.token);
       localStorage.setItem("adminName", response.admin.full_name);
+      localStorage.setItem("adminUsername", response.admin.username);
       navigate("/admin/dashboard");
     } catch {
       setError("Invalid username or password");

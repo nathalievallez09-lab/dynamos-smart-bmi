@@ -1,5 +1,6 @@
 import { Card } from "../ui/card";
 import { TrendingUp, Users, Activity, Calendar } from "lucide-react";
+import type { AdminAnalyticsData } from "../../api/api-integration";
 import {
   BarChart,
   Bar,
@@ -16,39 +17,35 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Mock analytics data
-const monthlyUsers = [
-  { month: "Sep", users: 45, measurements: 156 },
-  { month: "Oct", users: 52, measurements: 189 },
-  { month: "Nov", users: 61, measurements: 234 },
-  { month: "Dec", users: 68, measurements: 278 },
-  { month: "Jan", users: 75, measurements: 312 },
-  { month: "Feb", users: 82, measurements: 354 },
-];
+const emptyAnalytics: AdminAnalyticsData = {
+  totalUsers: 0,
+  totalMeasurements: 0,
+  avgBmi: 0,
+  measurementsToday: 0,
+  monthlyUsers: [],
+  dailyMeasurements: [],
+  bmiDistribution: [
+    { name: "Underweight", value: 0, color: "#54acbf" },
+    { name: "Normal", value: 0, color: "#26658c" },
+    { name: "Overweight", value: 0, color: "#023859" },
+    { name: "Obese", value: 0, color: "#d4183d" },
+  ],
+  genderDistribution: [
+    { name: "Male", value: 0, color: "#54acbf" },
+    { name: "Female", value: 0, color: "#26658c" },
+  ],
+};
 
-const bmiDistribution = [
-  { name: "Underweight", value: 12, color: "#54acbf" },
-  { name: "Normal", value: 58, color: "#26658c" },
-  { name: "Overweight", value: 23, color: "#023859" },
-  { name: "Obese", value: 7, color: "#d4183d" },
-];
+export function AdminAnalytics({
+  analytics = emptyAnalytics,
+}: {
+  analytics?: AdminAnalyticsData | null;
+}) {
+  const data = analytics || emptyAnalytics;
+  const averageMeasurementsPerUser = data.totalUsers
+    ? (data.totalMeasurements / data.totalUsers).toFixed(1)
+    : "0.0";
 
-const dailyMeasurements = [
-  { day: "Mon", count: 18 },
-  { day: "Tue", count: 22 },
-  { day: "Wed", count: 25 },
-  { day: "Thu", count: 20 },
-  { day: "Fri", count: 28 },
-  { day: "Sat", count: 15 },
-  { day: "Sun", count: 12 },
-];
-
-const genderDistribution = [
-  { name: "Male", value: 55, color: "#54acbf" },
-  { name: "Female", value: 45, color: "#26658c" },
-];
-
-export function AdminAnalytics() {
   return (
     <div className="space-y-6">
       <Card className="p-6 glass-card">
@@ -61,8 +58,8 @@ export function AdminAnalytics() {
               <Users className="w-6 h-6" />
             </div>
             <p className="text-sm opacity-90">Total Users</p>
-            <p className="text-3xl font-bold">82</p>
-            <p className="text-xs opacity-75 mt-1">+9% from last month</p>
+            <p className="text-3xl font-bold">{data.totalUsers}</p>
+            <p className="text-xs opacity-75 mt-1">Live Firebase data</p>
           </div>
 
           <div className="p-4 bg-[#a7ebf2]/10 rounded-lg border border-[#54acbf]/20">
@@ -70,8 +67,8 @@ export function AdminAnalytics() {
               <Activity className="w-6 h-6 text-[#54acbf]" />
             </div>
             <p className="text-sm text-[#026658c]/70">Total Measurements</p>
-            <p className="text-3xl font-bold text-[#023859]">354</p>
-            <p className="text-xs text-[#026658c]/60 mt-1">This month</p>
+            <p className="text-3xl font-bold text-[#023859]">{data.totalMeasurements}</p>
+            <p className="text-xs text-[#026658c]/60 mt-1">All records</p>
           </div>
 
           <div className="p-4 bg-[#a7ebf2]/10 rounded-lg border border-[#54acbf]/20">
@@ -79,7 +76,7 @@ export function AdminAnalytics() {
               <TrendingUp className="w-6 h-6 text-[#26658c]" />
             </div>
             <p className="text-sm text-[#026658c]/70">Avg. BMI</p>
-            <p className="text-3xl font-bold text-[#023859]">22.8</p>
+            <p className="text-3xl font-bold text-[#023859]">{data.avgBmi}</p>
             <p className="text-xs text-[#026658c]/60 mt-1">All users</p>
           </div>
 
@@ -88,7 +85,7 @@ export function AdminAnalytics() {
               <Calendar className="w-6 h-6 text-[#023859]" />
             </div>
             <p className="text-sm text-[#026658c]/70">Today</p>
-            <p className="text-3xl font-bold text-[#023859]">28</p>
+            <p className="text-3xl font-bold text-[#023859]">{data.measurementsToday}</p>
             <p className="text-xs text-[#026658c]/60 mt-1">Measurements</p>
           </div>
         </div>
@@ -100,7 +97,7 @@ export function AdminAnalytics() {
               User Growth & Measurements
             </h3>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={monthlyUsers}>
+              <LineChart data={data.monthlyUsers}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#54acbf20" />
                 <XAxis dataKey="month" stroke="#026658c" />
                 <YAxis stroke="#026658c" />
@@ -137,7 +134,7 @@ export function AdminAnalytics() {
               Daily Measurements (This Week)
             </h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={dailyMeasurements}>
+              <BarChart data={data.dailyMeasurements}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#54acbf20" />
                 <XAxis dataKey="day" stroke="#026658c" />
                 <YAxis stroke="#026658c" />
@@ -163,7 +160,7 @@ export function AdminAnalytics() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={bmiDistribution}
+                  data={data.bmiDistribution}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -172,7 +169,7 @@ export function AdminAnalytics() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {bmiDistribution.map((entry, index) => (
+                  {data.bmiDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -180,7 +177,7 @@ export function AdminAnalytics() {
               </PieChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {bmiDistribution.map((item) => (
+              {data.bmiDistribution.map((item) => (
                 <div
                   key={item.name}
                   className="flex items-center gap-2 p-2 bg-[#a7ebf2]/10 rounded"
@@ -202,7 +199,7 @@ export function AdminAnalytics() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={genderDistribution}
+                  data={data.genderDistribution}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -211,7 +208,7 @@ export function AdminAnalytics() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {genderDistribution.map((entry, index) => (
+                  {data.genderDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -219,7 +216,7 @@ export function AdminAnalytics() {
               </PieChart>
             </ResponsiveContainer>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {genderDistribution.map((item) => (
+              {data.genderDistribution.map((item) => (
                 <div
                   key={item.name}
                   className="flex items-center gap-2 p-2 bg-[#a7ebf2]/10 rounded"
@@ -247,7 +244,7 @@ export function AdminAnalytics() {
             <div>
               <p className="font-semibold text-[#023859]">User Growth Trending Upward</p>
               <p className="text-sm text-[#026658c]/80 mt-1">
-                9% increase in active users this month. Friday shows highest measurement activity.
+                User registrations and measurement counts are sourced directly from Firebase for the last six months.
               </p>
             </div>
           </div>
@@ -257,7 +254,7 @@ export function AdminAnalytics() {
             <div>
               <p className="font-semibold text-[#023859]">Healthy BMI Majority</p>
               <p className="text-sm text-[#026658c]/80 mt-1">
-                58% of users maintain normal BMI levels, indicating positive health awareness.
+                Current BMI category totals reflect the latest live records stored for each captured measurement.
               </p>
             </div>
           </div>
@@ -267,7 +264,7 @@ export function AdminAnalytics() {
             <div>
               <p className="font-semibold text-[#023859]">Engagement Analysis</p>
               <p className="text-sm text-[#026658c]/80 mt-1">
-                Average of 4.3 measurements per user. Consider incentive programs for regular tracking.
+                Average of {averageMeasurementsPerUser} measurements per user based on the active Firebase dataset.
               </p>
             </div>
           </div>

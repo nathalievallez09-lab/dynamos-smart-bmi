@@ -9,7 +9,7 @@ import { BMIStatistics } from "../components/BMIStatistics";
 import { SystemArchitecture } from "../components/SystemArchitecture";
 import { Authors } from "../components/Authors";
 import { Footer } from "../components/Footer";
-import { getUserData } from "../api/api-integration";
+import { userLogin } from "../api/api-integration";
 
 // --- Animated Background as a child component ---
 function AnimatedBackground() {
@@ -63,6 +63,7 @@ function AnimatedBackground() {
 
 export function LandingPage() {
   const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
   const [idError, setIdError] = useState("");
   const [isCheckingId, setIsCheckingId] = useState(false);
   const navigate = useNavigate();
@@ -72,14 +73,20 @@ export function LandingPage() {
       setIdError("Please enter a valid 5-digit User ID.");
       return;
     }
+    if (!password.trim()) {
+      setIdError("Please enter your password.");
+      return;
+    }
 
     setIdError("");
     setIsCheckingId(true);
     try {
-      await getUserData(userId);
+      const response = await userLogin(userId, password);
+      localStorage.setItem("userToken", response.token);
+      localStorage.setItem("userId", response.user.id);
       navigate(`/dashboard/${userId}`);
     } catch {
-      setIdError("User ID not found in the database.");
+      setIdError("Invalid user ID or password.");
     } finally {
       setIsCheckingId(false);
     }
@@ -149,9 +156,9 @@ export function LandingPage() {
                   <h3 className="text-xl font-semibold text-[#023859]">Access Your Dashboard</h3>
                 </div>
                 <p className="text-[#026658c]/70 mb-4 text-sm">
-                  Enter your 5-digit User ID to view your BMI records and analytics
+                  Enter your 5-digit User ID and password to view your BMI records and analytics
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col gap-3">
                   <Input
                     type="text"
                     placeholder="Enter 5-digit ID"
@@ -165,10 +172,21 @@ export function LandingPage() {
                     className="text-center text-base sm:text-lg tracking-widest bg-white/70 border-[#54acbf]/30 focus:border-[#54acbf]"
                     maxLength={5}
                   />
+                  <Input
+                    type="password"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setIdError("");
+                    }}
+                    onKeyPress={handleKeyPress}
+                    className="text-center text-base bg-white/70 border-[#54acbf]/30 focus:border-[#54acbf]"
+                  />
                   <Button
                     onClick={handleAccessDashboard}
                     disabled={isCheckingId}
-                    className="bg-[#54acbf] hover:bg-[#26658c] text-white transition-all duration-300 shadow-[0_10px_24px_rgba(84,172,191,0.35)] hover:shadow-[0_14px_30px_rgba(84,172,191,0.4)] px-8 w-full sm:w-auto"
+                    className="bg-[#54acbf] hover:bg-[#26658c] text-white transition-all duration-300 shadow-[0_10px_24px_rgba(84,172,191,0.35)] hover:shadow-[0_14px_30px_rgba(84,172,191,0.4)] px-8 w-full"
                   >
                     {isCheckingId ? "Checking..." : "Access"}
                   </Button>

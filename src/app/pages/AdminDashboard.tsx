@@ -10,13 +10,26 @@ import {
   LogOut,
   Menu,
   X,
+  Save,
+  Shield,
+  Download,
 } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 import { UserManagement } from "../components/admin/UserManagement";
 import { SystemMonitoring } from "../components/admin/SystemMonitoring";
 import { AdminAnalytics } from "../components/admin/AdminAnalytics";
-import { getAdminOverview, getAdminUsers } from "../api/api-integration";
+import {
+  getAdminAnalytics,
+  getAdminOverview,
+  getAdminSettings,
+  getAdminUsers,
+  updateAdminSettings,
+  type AdminAnalyticsData,
+  type AdminSettings,
+} from "../api/api-integration";
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -24,10 +37,10 @@ export function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [adminName, setAdminName] = useState("Administrator");
   const [stats, setStats] = useState([
-    { label: "Total Users", value: "82", change: "+9%", color: "#54acbf" },
-    { label: "Measurements Today", value: "28", change: "+12%", color: "#26658c" },
-    { label: "Active Sessions", value: "5", change: "Live", color: "#023859" },
-    { label: "System Health", value: "98.5%", change: "Excellent", color: "#26658c" },
+    { label: "Total Users", value: "0", change: "0 active", color: "#54acbf" },
+    { label: "Measurements Today", value: "0", change: "0 total", color: "#26658c" },
+    { label: "Avg. BMI", value: "0", change: "Live", color: "#023859" },
+    { label: "System Health", value: "100%", change: "Excellent", color: "#26658c" },
   ]);
   const [users, setUsers] = useState<
     Array<{
@@ -42,6 +55,66 @@ export function AdminDashboard() {
       status: "active" | "inactive";
     }>
   >([]);
+  const [analytics, setAnalytics] = useState<AdminAnalyticsData | null>(null);
+  const [adminSettings, setAdminSettings] = useState<AdminSettings | null>(null);
+  const [adminUsername, setAdminUsername] = useState("");
+  const [settingsName, setSettingsName] = useState("");
+  const [settingsPassword, setSettingsPassword] = useState("");
+  const [defaultExportScope, setDefaultExportScope] = useState<"all" | "specific">("all");
+  const [settingsMessage, setSettingsMessage] = useState("");
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const loadAdminData = async (isMounted = true) => {
+    const [overview, userList, analyticsData] = await Promise.all([
+      getAdminOverview(),
+      getAdminUsers(),
+      getAdminAnalytics(),
+    ]);
+    if (!isMounted) return;
+
+    setStats([
+      {
+        label: "Total Users",
+        value: String(overview.totalUsers),
+        change: `${overview.activeUsers} active`,
+        color: "#54acbf",
+      },
+      {
+        label: "Measurements Today",
+        value: String(overview.measurementsToday),
+        change: `${overview.totalMeasurements} total`,
+        color: "#26658c",
+      },
+      {
+        label: "Avg. BMI",
+        value: String(overview.avgBmi),
+        change: "Live",
+        color: "#023859",
+      },
+      {
+        label: "System Health",
+        value: `${overview.systemHealth}%`,
+        change: "Excellent",
+        color: "#26658c",
+      },
+    ]);
+
+    setUsers(
+      userList.users.map((item) => ({
+        id: item.id,
+        name: item.name,
+        age: item.age,
+        sex: item.sex,
+        email: item.email,
+        lastMeasurement: item.last_measurement,
+        totalRecords: Number(item.total_records),
+        currentBMI: Number(item.current_bmi),
+        status: item.status,
+      })),
+    );
+
+    setAnalytics(analyticsData);
+  };
 
   useEffect(() => {
     // Check if admin is authenticated
@@ -53,64 +126,35 @@ export function AdminDashboard() {
     if (storedName) {
       setAdminName(storedName);
     }
+    const storedUsername = localStorage.getItem("adminUsername");
+    if (storedUsername) {
+      setAdminUsername(storedUsername);
+    }
+    const storedExportScope = localStorage.getItem("adminDefaultExportScope");
+    if (storedExportScope === "all" || storedExportScope === "specific") {
+      setDefaultExportScope(storedExportScope);
+    }
   }, [navigate]);
 
   useEffect(() => {
     let isMounted = true;
-    const loadAdminData = async () => {
+    const initialize = async () => {
       try {
-        const [overview, userList] = await Promise.all([
-          getAdminOverview(),
-          getAdminUsers(),
-        ]);
-        if (!isMounted) return;
-
-        setStats([
-          {
-            label: "Total Users",
-            value: String(overview.totalUsers),
-            change: `${overview.activeUsers} active`,
-            color: "#54acbf",
-          },
-          {
-            label: "Measurements Today",
-            value: String(overview.measurementsToday),
-            change: `${overview.totalMeasurements} total`,
-            color: "#26658c",
-          },
-          {
-            label: "Avg. BMI",
-            value: String(overview.avgBmi),
-            change: "Live",
-            color: "#023859",
-          },
-          {
-            label: "System Health",
-            value: `${overview.systemHealth}%`,
-            change: "Excellent",
-            color: "#26658c",
-          },
-        ]);
-
-        setUsers(
-          userList.users.map((item) => ({
-            id: item.id,
-            name: item.name,
-            age: item.age,
-            sex: item.sex,
-            email: item.email,
-            lastMeasurement: item.last_measurement,
-            totalRecords: Number(item.total_records),
-            currentBMI: Number(item.current_bmi),
-            status: item.status,
-          })),
-        );
+        await loadAdminData(isMounted);
+        const storedUsername = localStorage.getItem("adminUsername");
+        if (storedUsername && isMounted) {
+          const settings = await getAdminSettings(storedUsername);
+          if (!isMounted) return;
+          setAdminSettings(settings);
+          setSettingsName(settings.full_name);
+          setAdminUsername(settings.username);
+        }
       } catch {
         // Keep static cards as fallback.
       }
     };
 
-    loadAdminData();
+    initialize();
     return () => {
       isMounted = false;
     };
@@ -118,7 +162,36 @@ export function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminName");
+    localStorage.removeItem("adminUsername");
     navigate("/admin/login");
+  };
+
+  const handleSaveSettings = async () => {
+    if (!adminUsername || !settingsName.trim()) {
+      setSettingsMessage("Admin name is required.");
+      return;
+    }
+
+    setIsSavingSettings(true);
+    setSettingsMessage("");
+    try {
+      const updated = await updateAdminSettings(adminUsername, {
+        full_name: settingsName,
+        password: settingsPassword || undefined,
+      });
+      setAdminSettings(updated);
+      setAdminName(updated.full_name);
+      setSettingsName(updated.full_name);
+      setSettingsPassword("");
+      localStorage.setItem("adminName", updated.full_name);
+      localStorage.setItem("adminDefaultExportScope", defaultExportScope);
+      setSettingsMessage("Settings saved.");
+    } catch (error) {
+      setSettingsMessage(error instanceof Error ? error.message : "Failed to save settings.");
+    } finally {
+      setIsSavingSettings(false);
+    }
   };
 
   return (
@@ -399,9 +472,9 @@ export function AdminDashboard() {
                 </motion.div>
               )}
 
-              {activeSection === "users" && <UserManagement users={users} />}
+              {activeSection === "users" && <UserManagement users={users} onRefresh={() => loadAdminData(true)} />}
               {activeSection === "monitoring" && <SystemMonitoring />}
-              {activeSection === "analytics" && <AdminAnalytics />}
+              {activeSection === "analytics" && <AdminAnalytics analytics={analytics} />}
 
               {activeSection === "settings" && (
                 <motion.div
@@ -409,14 +482,116 @@ export function AdminDashboard() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <Card className="p-8 glass-card">
-                    <h2 className="text-2xl font-bold text-[#023859] mb-6">
-                      System Settings
-                    </h2>
-                    <p className="text-[#026658c]">
-                      Settings configuration panel coming soon...
-                    </p>
-                  </Card>
+                  <div className="space-y-6">
+                    <Card className="p-8 glass-card">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="rounded-lg bg-[#54acbf]/15 p-3">
+                          <Shield className="w-6 h-6 text-[#54acbf]" />
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-bold text-[#023859]">Admin Settings</h2>
+                          <p className="text-[#026658c]/70">Manage admin account details stored in Firebase.</p>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <Label className="text-[#026658c]">Username</Label>
+                          <Input value={adminUsername} disabled className="mt-2 bg-[#f0f9fa]" />
+                        </div>
+                        <div>
+                          <Label className="text-[#026658c]">Role</Label>
+                          <Input value={adminSettings?.role || "admin"} disabled className="mt-2 bg-[#f0f9fa]" />
+                        </div>
+                        <div>
+                          <Label className="text-[#026658c]">Display Name</Label>
+                          <Input
+                            value={settingsName}
+                            onChange={(e) => {
+                              setSettingsName(e.target.value);
+                              setSettingsMessage("");
+                            }}
+                            className="mt-2 bg-white"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[#026658c]">New Password</Label>
+                          <Input
+                            type="password"
+                            value={settingsPassword}
+                            onChange={(e) => {
+                              setSettingsPassword(e.target.value);
+                              setSettingsMessage("");
+                            }}
+                            placeholder="Leave blank to keep current password"
+                            className="mt-2 bg-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-6 flex items-center justify-between border-t border-[#54acbf]/20 pt-6">
+                        <div className="text-sm text-[#026658c]/70">
+                          Last updated: {adminSettings?.updated_at ? new Date(adminSettings.updated_at).toLocaleString() : "-"}
+                        </div>
+                        <Button
+                          onClick={handleSaveSettings}
+                          disabled={isSavingSettings}
+                          className="bg-[#54acbf] hover:bg-[#26658c] text-white"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {isSavingSettings ? "Saving..." : "Save Admin Settings"}
+                        </Button>
+                      </div>
+                      {settingsMessage && (
+                        <p className={`mt-4 text-sm ${settingsMessage === "Settings saved." ? "text-[#26658c]" : "text-red-600"}`}>
+                          {settingsMessage}
+                        </p>
+                      )}
+                    </Card>
+
+                    <Card className="p-8 glass-card">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="rounded-lg bg-[#023859]/10 p-3">
+                          <Download className="w-6 h-6 text-[#023859]" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-[#023859]">Export Preferences</h3>
+                          <p className="text-[#026658c]/70">Choose the default export mode used in admin user downloads.</p>
+                        </div>
+                      </div>
+
+                      <div className="max-w-sm">
+                        <Label className="text-[#026658c]">Default Export Scope</Label>
+                        <select
+                          value={defaultExportScope}
+                          onChange={(e) => {
+                            const value = e.target.value as "all" | "specific";
+                            setDefaultExportScope(value);
+                            localStorage.setItem("adminDefaultExportScope", value);
+                            setSettingsMessage("");
+                          }}
+                          className="mt-2 flex h-10 w-full rounded-md border border-[#54acbf]/30 bg-white px-3 py-2 text-sm"
+                        >
+                          <option value="all">All Users</option>
+                          <option value="specific">Search by Name or ID</option>
+                        </select>
+                      </div>
+                    </Card>
+
+                    <Card className="p-8 glass-card">
+                      <h3 className="text-xl font-bold text-[#023859] mb-4">System Info</h3>
+                      <div className="grid md:grid-cols-2 gap-4 text-sm">
+                        <div className="rounded-lg bg-[#a7ebf2]/10 p-4 border border-[#54acbf]/20">
+                          <p className="text-[#026658c]/70 mb-1">Firebase Database</p>
+                          <p className="font-semibold text-[#023859]">smartbmi-demo-default-rtdb</p>
+                        </div>
+                        <div className="rounded-lg bg-[#a7ebf2]/10 p-4 border border-[#54acbf]/20">
+                          <p className="text-[#026658c]/70 mb-1">Authenticated Admin</p>
+                          <p className="font-semibold text-[#023859]">{adminUsername || "-"}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
                 </motion.div>
               )}
             </div>
