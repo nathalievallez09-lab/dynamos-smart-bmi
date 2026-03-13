@@ -22,10 +22,22 @@ export default async function handler(req, res) {
     }
 
     const latestHistory = Array.isArray(history) ? history.slice(-8) : [];
-    const conversation = messages.slice(-10).map((message) => ({
-      role: message.role,
-      content: [{ type: "input_text", text: message.content }],
-    }));
+    const conversation = messages
+      .slice(-10)
+      .filter((message) => {
+        const role = message?.role;
+        const content = typeof message?.content === "string" ? message.content.trim() : "";
+        return ["user", "assistant", "system", "developer"].includes(role) && content;
+      })
+      .map((message) => ({
+        role: message.role,
+        content: [
+          {
+            type: message.role === "assistant" ? "output_text" : "input_text",
+            text: message.content,
+          },
+        ],
+      }));
 
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const response = await client.responses.create({
