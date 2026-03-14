@@ -53,11 +53,6 @@ export type UserLoginResponse = {
   user: UserProfile;
 };
 
-export type UserAiMessage = {
-  role: "assistant" | "user";
-  content: string;
-};
-
 export type AdminSettings = {
   username: string;
   full_name: string;
@@ -371,37 +366,6 @@ export async function userLogin(userId: string, password: string): Promise<UserL
     token: `user-${userId}-${Date.now()}`,
     user: toUserProfile(userId, user),
   };
-}
-
-export async function askUserAi(input: {
-  user: {
-    id: string;
-    name: string;
-    age: number;
-    sex: string;
-    currentBMI: number;
-    category: string;
-    height: number;
-    weight: number;
-    lastUpdated: string;
-  };
-  history: BMIHistoryEntry[];
-  messages: UserAiMessage[];
-}) {
-  const response = await fetch("/api/user-ai-chat", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  });
-
-  const data = (await response.json().catch(() => ({}))) as { reply?: string; error?: string };
-  if (!response.ok) {
-    throw new Error(data.error || "AI request failed");
-  }
-
-  return { reply: data.reply || "" };
 }
 
 export async function getBMIHistory(userId: string) {

@@ -7,10 +7,6 @@ import {
   TrendingUp,
   Calendar,
   Download,
-  MessageCircleHeart,
-  Sparkles,
-  Send,
-  LifeBuoy,
   LogOut,
   Edit2,
   Save,
@@ -24,20 +20,11 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "../components/ui/sheet";
 import { BMIGauge } from "../components/BMIGauge";
 import { BMIHistoryChart } from "../components/BMIHistoryChart";
 import { BMIAnalytics } from "../components/BMIAnalytics";
 import { HealthTips } from "../components/HealthTips";
 import {
-  askUserAi,
   getBMIHistory,
   getUserData,
   updateUserPassword,
@@ -102,19 +89,6 @@ export function Dashboard() {
   const [passwordError, setPasswordError] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isDownloadingCopy, setIsDownloadingCopy] = useState(false);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [helpMode, setHelpMode] = useState<"overview" | "ai" | "concern">("overview");
-  const [aiInput, setAiInput] = useState("");
-  const [aiMessages, setAiMessages] = useState<Array<{ role: "assistant" | "user"; content: string }>>([
-    {
-      role: "assistant",
-      content: "Hello. I can help with your BMI, food choices, activity, or general concerns.",
-    },
-  ]);
-  const [concernSubject, setConcernSubject] = useState("");
-  const [concernMessage, setConcernMessage] = useState("");
-  const [concernStatus, setConcernStatus] = useState("");
-  const [isAiThinking, setIsAiThinking] = useState(false);
 
   useEffect(() => {
     const sessionUserId = localStorage.getItem("userId");
@@ -177,23 +151,6 @@ export function Dashboard() {
     setEditedName(userData.name);
     setEditedAge(userData.age ? String(userData.age) : "");
   }, [userData.name, userData.age]);
-
-  useEffect(() => {
-    if (!userData.name) return;
-
-    setAiMessages((current) => {
-      if (!current.length || current[0].role !== "assistant") {
-        return current;
-      }
-
-      const personalizedGreeting = `Hey ${userData.name}, how are you today? Ask me about your BMI, food, exercise, or anything you're concerned about.`;
-      if (current[0].content === personalizedGreeting) {
-        return current;
-      }
-
-      return [{ role: "assistant", content: personalizedGreeting }, ...current.slice(1)];
-    });
-  }, [userData.name]);
 
   const handleLogout = () => {
     localStorage.removeItem("userToken");
@@ -287,63 +244,6 @@ export function Dashboard() {
       URL.revokeObjectURL(url);
     } finally {
       setIsDownloadingCopy(false);
-    }
-  };
-
-  const handleSubmitConcern = () => {
-    if (!concernSubject.trim() || !concernMessage.trim()) {
-      setConcernStatus("Please complete the concern form before sending.");
-      return;
-    }
-
-    setConcernStatus("Concern draft ready. Ticket wiring can be connected next to Firebase/admin notifications.");
-    setConcernSubject("");
-    setConcernMessage("");
-  };
-
-  const handleAiChat = async () => {
-    if (!aiInput.trim()) {
-      return;
-    }
-
-    const question = aiInput.trim();
-    const nextMessages = [...aiMessages, { role: "user" as const, content: question }];
-
-    setAiInput("");
-    setAiMessages(nextMessages);
-    setIsAiThinking(true);
-
-    try {
-      const response = await askUserAi({
-        user: {
-          id: userData.id,
-          name: userData.name,
-          age: userData.age,
-          sex: userData.sex,
-          currentBMI: userData.currentBMI,
-          category: category.label,
-          height: userData.height,
-          weight: userData.weight,
-          lastUpdated: userData.lastUpdated,
-        },
-        history: userData.history,
-        messages: nextMessages,
-      });
-
-      setAiMessages((current) => [...current, { role: "assistant", content: response.reply }]);
-    } catch (error) {
-      setAiMessages((current) => [
-        ...current,
-        {
-          role: "assistant",
-          content:
-            error instanceof Error
-              ? `I couldn't answer right now: ${error.message}`
-              : "I couldn't answer right now.",
-        },
-      ]);
-    } finally {
-      setIsAiThinking(false);
     }
   };
 
@@ -677,218 +577,6 @@ export function Dashboard() {
         )}
       </div>
 
-      <motion.button
-        type="button"
-        onClick={() => setIsHelpOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full bg-[#023859] text-white shadow-[0_18px_40px_rgba(2,56,89,0.35)]"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.97 }}
-        aria-label="Need help"
-      >
-        <span className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#54acbf]">
-          <motion.span
-            className="absolute inset-0 rounded-full border border-white/50"
-            animate={{ scale: [1, 1.9, 1], opacity: [0.7, 0, 0.7] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
-          />
-          <motion.span
-            className="absolute inset-0 rounded-full border border-[#a7ebf2]"
-            animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
-          />
-          <MessageCircleHeart className="relative z-10 h-5 w-5" />
-        </span>
-      </motion.button>
-
-      <Sheet open={isHelpOpen} onOpenChange={setIsHelpOpen}>
-        <SheetContent side="right" className="w-[92vw] border-l border-[#54acbf]/20 bg-white sm:max-w-md">
-          <SheetHeader className="border-b border-[#54acbf]/15 bg-gradient-to-br from-[#023859] to-[#26658c] text-white">
-            <SheetTitle className="flex items-center gap-2 text-white">
-              <LifeBuoy className="h-5 w-5" />
-              Help Center
-            </SheetTitle>
-            <SheetDescription className="text-white/75">
-              Quick guidance, food suggestions, and support options for your account.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex gap-2 p-4">
-            {[
-              { id: "overview", label: "Menu" },
-              { id: "ai", label: "Ask AI" },
-              { id: "concern", label: "Concern" },
-            ].map((item) => (
-              <Button
-                key={item.id}
-                type="button"
-                variant={helpMode === item.id ? "default" : "outline"}
-                onClick={() => {
-                  setHelpMode(item.id as "overview" | "ai" | "concern");
-                  setConcernStatus("");
-                }}
-                className={
-                  helpMode === item.id
-                    ? "bg-[#54acbf] text-white hover:bg-[#26658c]"
-                    : "border-[#54acbf]/30 text-[#023859]"
-                }
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
-
-          <div className="space-y-4 p-4">
-            {helpMode === "overview" && (
-              <>
-                <Card className="border-[#54acbf]/20 bg-[#a7ebf2]/10 p-4">
-                  <div className="flex items-start gap-3">
-                    <Sparkles className="mt-1 h-5 w-5 text-[#26658c]" />
-                    <div>
-                      <p className="font-semibold text-[#023859]">Ask about your health</p>
-                      <p className="mt-1 text-sm text-[#026658c]/80">
-                        Get simple guidance about your BMI category, what to improve, and healthier food choices.
-                      </p>
-                      <Button
-                        type="button"
-                        onClick={() => setHelpMode("ai")}
-                        className="mt-3 bg-[#54acbf] text-white hover:bg-[#26658c]"
-                      >
-                        Open AI Help
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card className="border-[#54acbf]/20 bg-white p-4">
-                  <div className="flex items-start gap-3">
-                    <Send className="mt-1 h-5 w-5 text-[#023859]" />
-                    <div>
-                      <p className="font-semibold text-[#023859]">Report a concern</p>
-                      <p className="mt-1 text-sm text-[#026658c]/80">
-                        If something looks wrong in your account or your measurement, file a concern for admin follow-up.
-                      </p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setHelpMode("concern")}
-                        className="mt-3 border-[#023859] text-[#023859]"
-                      >
-                        File Concern
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </>
-            )}
-
-            {helpMode === "ai" && (
-              <Card className="border-[#54acbf]/20 p-5">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-full bg-[#54acbf]/15 p-2">
-                    <Sparkles className="h-5 w-5 text-[#54acbf]" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#023859]">AI Health Helper</p>
-                    <p className="text-sm text-[#026658c]/70">Preview guidance based on your current profile</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <div className="max-h-80 space-y-3 overflow-y-auto rounded-xl bg-[#f7fbfc] p-3">
-                    {aiMessages.map((message, index) => (
-                      <div
-                        key={`${message.role}-${index}`}
-                        className={`rounded-xl p-3 text-sm ${
-                          message.role === "assistant"
-                            ? "bg-[#a7ebf2]/20 text-[#023859]"
-                            : "ml-8 bg-[#023859] text-white"
-                        }`}
-                      >
-                        {message.content}
-                      </div>
-                    ))}
-                    {isAiThinking && (
-                      <div className="rounded-xl bg-[#a7ebf2]/20 p-3 text-sm text-[#023859]">
-                        Thinking...
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    <Textarea
-                      value={aiInput}
-                      onChange={(e) => setAiInput(e.target.value)}
-                      placeholder="Ask something like: What should I eat? How can I improve my BMI?"
-                      className="min-h-24"
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleAiChat}
-                      className="w-full bg-[#54acbf] text-white hover:bg-[#26658c]"
-                    >
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Send to AI
-                    </Button>
-                  </div>
-                  <p className="text-xs text-[#026658c]/70">
-                    This is general wellness guidance only, not medical diagnosis.
-                  </p>
-                </div>
-              </Card>
-            )}
-
-            {helpMode === "concern" && (
-              <Card className="border-[#54acbf]/20 p-5">
-                <p className="font-semibold text-[#023859]">Submit a concern</p>
-                <p className="mt-1 text-sm text-[#026658c]/70">
-                  Leave your issue here. This UI is ready for ticket wiring to Firebase and admin alerts.
-                </p>
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <Label className="text-[#026658c]">Subject</Label>
-                    <Input
-                      value={concernSubject}
-                      onChange={(e) => {
-                        setConcernSubject(e.target.value);
-                        setConcernStatus("");
-                      }}
-                      placeholder="Example: Wrong measurement result"
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-[#026658c]">Message</Label>
-                    <Textarea
-                      value={concernMessage}
-                      onChange={(e) => {
-                        setConcernMessage(e.target.value);
-                        setConcernStatus("");
-                      }}
-                      placeholder="Describe your concern here"
-                      className="mt-2 min-h-28"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={handleSubmitConcern}
-                    className="w-full bg-[#023859] text-white hover:bg-[#26658c]"
-                  >
-                    <Send className="mr-2 h-4 w-4" />
-                    Send concern
-                  </Button>
-                  {concernStatus && (
-                    <p className={`text-sm ${concernStatus.includes("ready") ? "text-[#26658c]" : "text-red-600"}`}>
-                      {concernStatus}
-                    </p>
-                  )}
-                </div>
-              </Card>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
