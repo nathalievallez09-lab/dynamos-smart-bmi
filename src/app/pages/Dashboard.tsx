@@ -15,6 +15,8 @@ import {
   Scale,
   Ruler,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -86,6 +88,8 @@ export function Dashboard() {
   const [editedAge, setEditedAge] = useState(String(userData.age || ""));
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isDownloadingCopy, setIsDownloadingCopy] = useState(false);
@@ -366,26 +370,46 @@ export function Dashboard() {
                           If you are still using the default password, reset it now to secure your account.
                         </p>
                         <div className="mt-4 grid gap-3 md:grid-cols-3">
-                          <Input
-                            type="password"
-                            placeholder="New password"
-                            value={newPassword}
-                            onChange={(e) => {
-                              setNewPassword(e.target.value);
-                              setPasswordError("");
-                            }}
-                            className="bg-white"
-                          />
-                          <Input
-                            type="password"
-                            placeholder="Confirm password"
-                            value={confirmPassword}
-                            onChange={(e) => {
-                              setConfirmPassword(e.target.value);
-                              setPasswordError("");
-                            }}
-                            className="bg-white"
-                          />
+                          <div className="relative">
+                            <Input
+                              type={showNewPassword ? "text" : "password"}
+                              placeholder="New password"
+                              value={newPassword}
+                              onChange={(e) => {
+                                setNewPassword(e.target.value);
+                                setPasswordError("");
+                              }}
+                              className="bg-white pr-12"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowNewPassword((current) => !current)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-700/70 transition-colors hover:text-amber-900"
+                              aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                            >
+                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                          <div className="relative">
+                            <Input
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="Confirm password"
+                              value={confirmPassword}
+                              onChange={(e) => {
+                                setConfirmPassword(e.target.value);
+                                setPasswordError("");
+                              }}
+                              className="bg-white pr-12"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword((current) => !current)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-700/70 transition-colors hover:text-amber-900"
+                              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
                           <Button
                             onClick={handleResetPassword}
                             disabled={isUpdatingPassword}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Activity, Heart, Scale, Users, Award, TrendingUp } from "lucide-react";
+import { Activity, Heart, Scale, Users, Award, TrendingUp, Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card } from "../components/ui/card";
@@ -64,6 +64,7 @@ function AnimatedBackground() {
 export function LandingPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [idError, setIdError] = useState("");
   const [isCheckingId, setIsCheckingId] = useState(false);
   const navigate = useNavigate();
@@ -120,7 +121,21 @@ export function LandingPage() {
                 <a href="#about" className="text-white/90 hover:text-[#a7ebf2] transition-colors">About</a>
                 <a href="#system" className="text-white/90 hover:text-[#a7ebf2] transition-colors">System</a>
                 <a href="#authors" className="text-white/90 hover:text-[#a7ebf2] transition-colors">Authors</a>
+                <a
+                  href="#login"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#54acbf] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#26658c]"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </a>
               </div>
+              <a
+                href="#login"
+                className="inline-flex items-center gap-2 rounded-full bg-[#54acbf] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#26658c] md:hidden"
+              >
+                <LogIn className="h-4 w-4" />
+                Login
+              </a>
             </div>
           </div>
         </nav>
@@ -148,7 +163,7 @@ export function LandingPage() {
                 and comprehensive health analytics for students and faculty.
               </p>
 
-              <Card className="max-w-md mx-auto p-5 sm:p-8 glass-card">
+              <Card id="login" className="max-w-md mx-auto p-5 sm:p-8 glass-card scroll-mt-28">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-lg bg-[#54acbf]/15">
                     <Users className="w-5 h-5 text-[#54acbf]" />
@@ -172,17 +187,27 @@ export function LandingPage() {
                     className="text-center text-base sm:text-lg tracking-widest bg-white/70 border-[#54acbf]/30 focus:border-[#54acbf]"
                     maxLength={5}
                   />
-                  <Input
-                    type="password"
-                    placeholder="Enter password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      setIdError("");
-                    }}
-                    onKeyPress={handleKeyPress}
-                    className="text-center text-base bg-white/70 border-[#54acbf]/30 focus:border-[#54acbf]"
-                  />
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setIdError("");
+                      }}
+                      onKeyPress={handleKeyPress}
+                      className="text-center text-base bg-white/70 border-[#54acbf]/30 pr-12 focus:border-[#54acbf]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#023859]/60 transition-colors hover:text-[#023859]"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                   <Button
                     onClick={handleAccessDashboard}
                     disabled={isCheckingId}
