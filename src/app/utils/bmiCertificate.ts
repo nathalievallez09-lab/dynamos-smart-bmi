@@ -142,10 +142,19 @@ function addSmartBmiLogo(doc: jsPDF, x: number, y: number) {
   doc.line(x + 8, y + 2, x + 13, y + 16);
   doc.line(x + 13, y + 16, x + 17, y + 8);
   doc.line(x + 17, y + 8, x + 24, y + 8);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(255, 255, 255);
-  doc.text("SMART BMI", x + 30, y + 10);
+}
+
+function addWatermarkLogo(doc: jsPDF) {
+  const centerX = page.width / 2 - 42;
+  const centerY = 146;
+
+  doc.setDrawColor(226, 247, 250);
+  doc.setLineWidth(3.2);
+  doc.line(centerX, centerY, centerX + 18, centerY);
+  doc.line(centerX + 18, centerY, centerX + 28, centerY - 24);
+  doc.line(centerX + 28, centerY - 24, centerX + 48, centerY + 34);
+  doc.line(centerX + 48, centerY + 34, centerX + 64, centerY);
+  doc.line(centerX + 64, centerY, centerX + 84, centerY);
 }
 
 function addLabeledParagraph(
@@ -233,6 +242,7 @@ function addFooter(doc: jsPDF) {
   const pageCount = doc.getNumberOfPages();
   for (let index = 1; index <= pageCount; index += 1) {
     doc.setPage(index);
+    addWatermarkLogo(doc);
     doc.setDrawColor(84, 172, 191);
     doc.line(page.margin, 280, page.width - page.margin, 280);
     doc.setFont("helvetica", "normal");
@@ -263,10 +273,10 @@ export function generateBMICertificate(options: BMICertificateOptions) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  doc.text("Smart BMI Health Record Certificate", page.width / 2 + 12, 16, { align: "center" });
+  doc.text("Smart BMI Health Record Certificate", page.width / 2, 16, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("Generated health-monitoring record for clinical consultation and personal tracking", page.width / 2 + 12, 24, {
+  doc.text("Generated health-monitoring record for clinical consultation and personal tracking", page.width / 2, 24, {
     align: "center",
   });
 
@@ -319,11 +329,6 @@ export function generateBMICertificate(options: BMICertificateOptions) {
     .forEach((card) => {
       y = addLabeledParagraph(doc, card.title, card.description, y);
     });
-
-  y = addLabeledParagraph(doc, "Professional Approval Note", advice.note, y, {
-    labelWidth: 54,
-    maxWidth: page.width - page.margin * 2 - 59,
-  });
 
   const predictionCard = advice.cards.find((card) => card.title === "Prediction");
   if (predictionCard) {
