@@ -13,6 +13,7 @@ export type UserProfile = {
 };
 
 export type BMIHistoryEntry = {
+  id: string;
   date: string;
   bmi: number;
   weight: number;
@@ -202,9 +203,13 @@ async function firebaseRequest<T>(path: string, init?: RequestInit): Promise<T> 
 }
 
 function sortMeasurements(measurements?: Record<string, FirebaseMeasurement>) {
-  return Object.values(measurements || {}).sort(
-    (a, b) => (a.capturedAt || 0) - (b.capturedAt || 0),
-  );
+  return sortMeasurementsWithKeys(measurements).map(({ measurement }) => measurement);
+}
+
+function sortMeasurementsWithKeys(measurements?: Record<string, FirebaseMeasurement>) {
+  return Object.entries(measurements || {})
+    .map(([id, measurement]) => ({ id, measurement }))
+    .sort((a, b) => (a.measurement.capturedAt || 0) - (b.measurement.capturedAt || 0));
 }
 
 function getLastMeasurement(measurements?: Record<string, FirebaseMeasurement>) {
@@ -279,7 +284,8 @@ function toUserProfile(userId: string, firebaseUser: FirebaseUser): UserProfile 
 }
 
 function toBmiHistory(measurements?: Record<string, FirebaseMeasurement>): BMIHistoryEntry[] {
-  return sortMeasurements(measurements).map((measurement) => ({
+  return sortMeasurementsWithKeys(measurements).map(({ id, measurement }) => ({
+    id,
     date: toIsoDate(measurement.capturedAt, measurement.capturedAtFormatted),
     bmi: Number(measurement.bmi || 0),
     weight: Number(measurement.weightKg || 0),
@@ -375,6 +381,26 @@ export async function getBMIHistory(userId: string) {
   }
 
   return { history: toBmiHistory(user.measurements) };
+}
+
+export async function deleteBMIHistoryEntry(userId: string, entryId: string) {
+  if (!entryId.trim()) {
+    throw new Error("History entry ID is required");
+  }
+
+  await firebaseRequest(`/users/${userId}/measurements/${entryId}.json`, {
+    method: "DELETE",
+  });
+
+  const [userResponse, historyResponse] = await Promise.all([
+    getUserData(userId),
+    getBMIHistory(userId),
+  ]);
+
+  return {
+    user: userResponse.user,
+    history: historyResponse.history,
+  };
 }
 
 export async function updateUserProfile(userId: string, data: { name: string; age?: number }) {
