@@ -36,6 +36,7 @@ const page = {
   width: 210,
   height: 297,
   margin: 16,
+  contentBottom: 272,
 };
 
 function formatDate(value: string | Date) {
@@ -95,7 +96,7 @@ function calculateAnalytics(history: BMIHistoryRecord[]) {
 }
 
 function ensureSpace(doc: jsPDF, y: number, needed: number) {
-  if (y + needed <= page.height - page.margin) {
+  if (y + needed <= page.contentBottom) {
     return y;
   }
 
@@ -107,6 +108,10 @@ function addWrappedText(doc: jsPDF, text: string, x: number, y: number, maxWidth
   const lines = doc.splitTextToSize(text, maxWidth);
   doc.text(lines, x, y);
   return y + lines.length * lineHeight;
+}
+
+function getWrappedTextHeight(doc: jsPDF, text: string, maxWidth: number, lineHeight = 5) {
+  return doc.splitTextToSize(text, maxWidth).length * lineHeight;
 }
 
 function addSectionTitle(doc: jsPDF, title: string, y: number) {
@@ -127,6 +132,43 @@ function addKeyValue(doc: jsPDF, label: string, value: string, x: number, y: num
   doc.text(`${label}:`, x, y);
   doc.setFont("helvetica", "normal");
   doc.text(value || "-", x + 28, y);
+}
+
+function addSmartBmiLogo(doc: jsPDF, x: number, y: number) {
+  doc.setDrawColor(167, 235, 242);
+  doc.setLineWidth(1.5);
+  doc.line(x, y + 8, x + 5, y + 8);
+  doc.line(x + 5, y + 8, x + 8, y + 2);
+  doc.line(x + 8, y + 2, x + 13, y + 16);
+  doc.line(x + 13, y + 16, x + 17, y + 8);
+  doc.line(x + 17, y + 8, x + 24, y + 8);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255);
+  doc.text("SMART BMI", x + 30, y + 10);
+}
+
+function addLabeledParagraph(
+  doc: jsPDF,
+  label: string,
+  text: string,
+  y: number,
+  options: { labelWidth?: number; maxWidth?: number } = {},
+) {
+  const labelWidth = options.labelWidth ?? 42;
+  const maxWidth = options.maxWidth ?? page.width - page.margin * 2 - labelWidth - 7;
+  const textHeight = getWrappedTextHeight(doc, text, maxWidth);
+  y = ensureSpace(doc, y, Math.max(12, textHeight + 4));
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(2, 56, 89);
+  doc.text(`${label}:`, page.margin + 3, y);
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(1, 28, 64);
+  const nextY = addWrappedText(doc, text, page.margin + labelWidth, y, maxWidth);
+  return nextY + 3;
 }
 
 function addHistoryTable(
@@ -217,13 +259,14 @@ export function generateBMICertificate(options: BMICertificateOptions) {
 
   doc.setFillColor(2, 56, 89);
   doc.rect(0, 0, page.width, 32, "F");
+  addSmartBmiLogo(doc, page.margin, 7);
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
-  doc.text("Smart BMI Health Record Certificate", page.width / 2, 16, { align: "center" });
+  doc.text("Smart BMI Health Record Certificate", page.width / 2 + 12, 16, { align: "center" });
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text("Generated health-monitoring record for clinical consultation and personal tracking", page.width / 2, 24, {
+  doc.text("Generated health-monitoring record for clinical consultation and personal tracking", page.width / 2 + 12, 24, {
     align: "center",
   });
 
@@ -274,36 +317,28 @@ export function generateBMICertificate(options: BMICertificateOptions) {
   advice.cards
     .filter((card) => card.title !== "Prediction")
     .forEach((card) => {
-      y = ensureSpace(doc, y, 12);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(2, 56, 89);
-      doc.text(`${card.title}:`, page.margin + 3, y);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(1, 28, 64);
-      y = addWrappedText(doc, card.description, page.margin + 27, y, page.width - page.margin * 2 - 30);
-      y += 2;
+      y = addLabeledParagraph(doc, card.title, card.description, y);
     });
 
-  y = ensureSpace(doc, y, 18);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(2, 56, 89);
-  doc.text("Professional Approval Note:", page.margin + 3, y);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(1, 28, 64);
-  y = addWrappedText(doc, advice.note, page.margin + 47, y, page.width - page.margin * 2 - 50);
-  y += 7;
+  y = addLabeledParagraph(doc, "Professional Approval Note", advice.note, y, {
+    labelWidth: 54,
+    maxWidth: page.width - page.margin * 2 - 59,
+  });
 
-  y = addSectionTitle(doc, "Prediction/Forecast", y);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(1, 28, 64);
-  addWrappedText(
-    doc,
-    "Prediction/Forecast: Not available in the current system.",
-    page.margin + 3,
-    y,
-    page.width - page.margin * 2 - 6,
-  );
+  const predictionCard = advice.cards.find((card) => card.title === "Prediction");
+  if (predictionCard) {
+    y = addSectionTitle(doc, "Prediction", y + 3);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(1, 28, 64);
+    addWrappedText(
+      doc,
+      predictionCard.description,
+      page.margin + 3,
+      y,
+      page.width - page.margin * 2 - 6,
+    );
+  }
 
   addFooter(doc);
   doc.save(`smart-bmi-certificate-${user.id}.pdf`);
