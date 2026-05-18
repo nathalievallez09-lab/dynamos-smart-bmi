@@ -7,16 +7,20 @@ import {
   TrendingUp,
   Calendar,
   Download,
+  FileText,
   LogOut,
   Edit2,
   Save,
   X,
+  Trash2,
   Heart,
   Scale,
   Ruler,
   AlertCircle,
   Eye,
   EyeOff,
+  Settings,
+  ShieldCheck,
 } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -27,11 +31,13 @@ import { BMIHistoryChart } from "../components/BMIHistoryChart";
 import { BMIAnalytics } from "../components/BMIAnalytics";
 import { HealthTips } from "../components/HealthTips";
 import {
+  deleteBMIHistoryEntry,
   getBMIHistory,
   getUserData,
   updateUserPassword,
   updateUserProfile,
 } from "../api/api-integration";
+import { generateBMICertificate } from "../utils/bmiCertificate";
 
 const emptyUserData = {
   id: "",
@@ -43,7 +49,32 @@ const emptyUserData = {
   weight: 0,
   lastUpdated: "",
   mustResetPassword: false,
-  history: [] as Array<{ date: string; bmi: number; weight: number; height: number }>,
+  history: [] as Array<{ id: string; date: string; bmi: number; weight: number; height: number }>,
+};
+
+type WeightUnit = "kg" | "lb";
+type HeightUnit = "cm" | "ft-in";
+
+const kgToLb = (weightKg: number) => weightKg * 2.20462;
+
+const cmToFeetInches = (heightCm: number) => {
+  const totalInches = Math.round(heightCm / 2.54);
+  const feet = Math.floor(totalInches / 12);
+  const inches = totalInches % 12;
+  return { feet, inches };
+};
+
+const formatWeight = (weightKg: number, unit: WeightUnit) => {
+  if (!Number.isFinite(weightKg)) return "-";
+  return unit === "kg" ? `${weightKg.toFixed(1)} kg` : `${kgToLb(weightKg).toFixed(1)} lb`;
+};
+
+const formatHeight = (heightCm: number, unit: HeightUnit) => {
+  if (!Number.isFinite(heightCm)) return "-";
+  if (unit === "cm") return `${heightCm.toFixed(1)} cm`;
+
+  const { feet, inches } = cmToFeetInches(heightCm);
+  return `${feet} ft ${inches} in`;
 };
 
 // --- Animated Background Component ---
@@ -91,8 +122,18 @@ export function Dashboard() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [isDownloadingCopy, setIsDownloadingCopy] = useState(false);
+  const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false);
+  const [historyMessage, setHistoryMessage] = useState("");
+  const [isDeletingHistoryId, setIsDeletingHistoryId] = useState("");
+  const [weightUnit, setWeightUnit] = useState<WeightUnit>(() => (
+    localStorage.getItem("dashboardWeightUnit") === "lb" ? "lb" : "kg"
+  ));
+  const [heightUnit, setHeightUnit] = useState<HeightUnit>(() => (
+    localStorage.getItem("dashboardHeightUnit") === "ft-in" ? "ft-in" : "cm"
+  ));
 
   useEffect(() => {
     const sessionUserId = localStorage.getItem("userId");
@@ -127,6 +168,7 @@ export function Dashboard() {
           lastUpdated: user.last_updated || new Date().toISOString(),
           mustResetPassword: Boolean(user.must_reset_password),
           history: history.map((item) => ({
+            id: item.id,
             date: item.date,
             bmi: Number(item.bmi),
             weight: Number(item.weight),
@@ -156,6 +198,20 @@ export function Dashboard() {
     setEditedAge(userData.age ? String(userData.age) : "");
   }, [userData.name, userData.age]);
 
+  useEffect(() => {
+    if (userData.mustResetPassword) {
+      setActiveSection("settings");
+    }
+  }, [userData.mustResetPassword]);
+
+  useEffect(() => {
+    localStorage.setItem("dashboardWeightUnit", weightUnit);
+  }, [weightUnit]);
+
+  useEffect(() => {
+    localStorage.setItem("dashboardHeightUnit", heightUnit);
+  }, [heightUnit]);
+
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("userId");
@@ -166,19 +222,23 @@ export function Dashboard() {
     if (!userId) return;
     if (!newPassword.trim()) {
       setPasswordError("Please enter a new password.");
+      setPasswordMessage("");
       return;
     }
     if (newPassword.length < 5) {
       setPasswordError("Password must be at least 5 characters.");
+      setPasswordMessage("");
       return;
     }
     if (newPassword !== confirmPassword) {
       setPasswordError("Passwords do not match.");
+      setPasswordMessage("");
       return;
     }
 
     setIsUpdatingPassword(true);
     setPasswordError("");
+    setPasswordMessage("");
     try {
       const refreshed = await updateUserPassword(userId, newPassword);
       setUserData((current) => ({
@@ -189,8 +249,10 @@ export function Dashboard() {
       }));
       setNewPassword("");
       setConfirmPassword("");
+      setPasswordMessage("Password updated successfully.");
     } catch (error) {
       setPasswordError(error instanceof Error ? error.message : "Failed to update password.");
+      setPasswordMessage("");
     } finally {
       setIsUpdatingPassword(false);
     }
@@ -225,12 +287,17 @@ export function Dashboard() {
 
     setIsDownloadingCopy(true);
     try {
-      const header = ["Date", "BMI", "Weight (kg)", "Height (cm)"];
+      const header = [
+        "Date",
+        "BMI",
+        `Weight (${weightUnit})`,
+        `Height (${heightUnit === "cm" ? "cm" : "ft/in"})`,
+      ];
       const rows = userData.history.map((record) => [
         new Date(record.date).toLocaleDateString(),
         record.bmi,
-        record.weight,
-        record.height,
+        formatWeight(record.weight, weightUnit),
+        formatHeight(record.height, heightUnit),
       ]);
       const escapeCell = (value: string | number) => `"${String(value).replace(/"/g, "\"\"")}"`;
       const content = [header, ...rows]
@@ -258,7 +325,208 @@ export function Dashboard() {
     return { label: "Obese", color: "#d4183d" };
   };
 
+  const handleGenerateCertificate = () => {
+    if (!userData.history.length) {
+      setHistoryMessage("No BMI records available to generate certificate.");
+      return;
+    }
+
+    setIsGeneratingCertificate(true);
+    setHistoryMessage("");
+
+    try {
+      generateBMICertificate({
+        user: userData,
+        weightUnit,
+        heightUnit,
+        formatWeight,
+        formatHeight,
+        getBMICategory,
+      });
+    } finally {
+      setIsGeneratingCertificate(false);
+    }
+  };
+
+  const handleDeleteHistoryRecord = async (entryId: string) => {
+    if (!userId) return;
+
+    const confirmed = window.confirm("Delete this BMI history record?");
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingHistoryId(entryId);
+    setHistoryMessage("");
+
+    try {
+      const refreshed = await deleteBMIHistoryEntry(userId, entryId);
+      setUserData((current) => ({
+        ...current,
+        name: refreshed.user.name,
+        age: refreshed.user.age,
+        sex: refreshed.user.sex,
+        currentBMI: Number(refreshed.user.current_bmi),
+        height: Number(refreshed.user.height),
+        weight: Number(refreshed.user.weight),
+        lastUpdated: refreshed.user.last_updated || current.lastUpdated,
+        mustResetPassword: Boolean(refreshed.user.must_reset_password),
+        history: refreshed.history.map((item) => ({
+          id: item.id,
+          date: item.date,
+          bmi: Number(item.bmi),
+          weight: Number(item.weight),
+          height: Number(item.height),
+        })),
+      }));
+      setHistoryMessage("BMI history record deleted.");
+    } catch (error) {
+      setHistoryMessage(
+        error instanceof Error ? error.message : "Failed to delete BMI history record.",
+      );
+    } finally {
+      setIsDeletingHistoryId("");
+    }
+  };
+
   const category = getBMICategory(userData.currentBMI);
+
+  const unitToggle = (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="rounded-lg border border-[#54acbf]/25 bg-white/80 p-1 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setWeightUnit("kg")}
+          className={`min-w-16 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+            weightUnit === "kg"
+              ? "bg-[#54acbf] text-white"
+              : "text-[#026658c] hover:bg-[#a7ebf2]/25"
+          }`}
+        >
+          kg
+        </button>
+        <button
+          type="button"
+          onClick={() => setWeightUnit("lb")}
+          className={`min-w-16 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+            weightUnit === "lb"
+              ? "bg-[#54acbf] text-white"
+              : "text-[#026658c] hover:bg-[#a7ebf2]/25"
+          }`}
+        >
+          lb
+        </button>
+      </div>
+      <div className="rounded-lg border border-[#54acbf]/25 bg-white/80 p-1 shadow-sm">
+        <button
+          type="button"
+          onClick={() => setHeightUnit("cm")}
+          className={`min-w-16 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+            heightUnit === "cm"
+              ? "bg-[#54acbf] text-white"
+              : "text-[#026658c] hover:bg-[#a7ebf2]/25"
+          }`}
+        >
+          cm
+        </button>
+        <button
+          type="button"
+          onClick={() => setHeightUnit("ft-in")}
+          className={`min-w-16 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors ${
+            heightUnit === "ft-in"
+              ? "bg-[#54acbf] text-white"
+              : "text-[#026658c] hover:bg-[#a7ebf2]/25"
+          }`}
+        >
+          ft / in
+        </button>
+      </div>
+    </div>
+  );
+
+  const passwordSettingsForm = (
+    <div className="rounded-lg border border-[#54acbf]/20 bg-white p-5 shadow-sm">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="rounded-lg bg-[#54acbf]/15 p-3">
+          <ShieldCheck className="h-5 w-5 text-[#54acbf]" />
+        </div>
+        <div>
+          <p className="font-semibold text-[#023859]">Password Reset</p>
+          <p className="text-sm text-[#026658c]/80">
+            No old password needed. Enter your new password twice to confirm it.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label className="text-[#026658c]">New Password</Label>
+          <div className="relative">
+            <Input
+              type={showNewPassword ? "text" : "password"}
+              placeholder="Enter new password"
+              value={newPassword}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setPasswordError("");
+                setPasswordMessage("");
+              }}
+              className="bg-white pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword((current) => !current)}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border border-[#54acbf]/30 bg-white text-[#26658c] shadow-sm transition-colors hover:bg-[#a7ebf2]/20 hover:text-[#023859]"
+              aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+            >
+              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-[#026658c]">Confirm New Password</Label>
+          <div className="relative">
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Re-enter new password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setPasswordError("");
+                setPasswordMessage("");
+              }}
+              className="bg-white pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((current) => !current)}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border border-[#54acbf]/30 bg-white text-[#26658c] shadow-sm transition-colors hover:bg-[#a7ebf2]/20 hover:text-[#023859]"
+              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <p className="text-sm text-[#026658c]/80">
+          Use at least 5 characters.
+        </p>
+        <Button
+          onClick={handleResetPassword}
+          disabled={isUpdatingPassword}
+          className="bg-[#54acbf] text-white hover:bg-[#26658c]"
+        >
+          {isUpdatingPassword ? "Updating..." : "Save New Password"}
+        </Button>
+      </div>
+
+      {passwordError && <p className="mt-4 text-sm text-red-600">{passwordError}</p>}
+      {passwordMessage && <p className="mt-4 text-sm text-[#26658c]">{passwordMessage}</p>}
+    </div>
+  );
 
   return (
     <div className="min-h-screen relative overflow-hidden tech-surface">
@@ -321,6 +589,7 @@ export function Dashboard() {
                   { id: "profile", icon: <User className="w-5 h-5" />, label: "Profile" },
                   { id: "analytics", icon: <TrendingUp className="w-5 h-5" />, label: "Analytics" },
                   { id: "history", icon: <Calendar className="w-5 h-5" />, label: "History" },
+                  { id: "settings", icon: <Settings className="w-5 h-5" />, label: "Settings" },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -369,60 +638,22 @@ export function Dashboard() {
                         <p className="mt-1 text-sm text-amber-800">
                           If you are still using the default password, reset it now to secure your account.
                         </p>
-                        <div className="mt-4 grid gap-3 md:grid-cols-3">
-                          <div className="relative">
-                            <Input
-                              type={showNewPassword ? "text" : "password"}
-                              placeholder="New password"
-                              value={newPassword}
-                              onChange={(e) => {
-                                setNewPassword(e.target.value);
-                                setPasswordError("");
-                              }}
-                              className="bg-white pr-12"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowNewPassword((current) => !current)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-700/70 transition-colors hover:text-amber-900"
-                              aria-label={showNewPassword ? "Hide new password" : "Show new password"}
-                            >
-                              {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                          <div className="relative">
-                            <Input
-                              type={showConfirmPassword ? "text" : "password"}
-                              placeholder="Confirm password"
-                              value={confirmPassword}
-                              onChange={(e) => {
-                                setConfirmPassword(e.target.value);
-                                setPasswordError("");
-                              }}
-                              className="bg-white pr-12"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmPassword((current) => !current)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-700/70 transition-colors hover:text-amber-900"
-                              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                            >
-                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
                           <Button
-                            onClick={handleResetPassword}
-                            disabled={isUpdatingPassword}
+                            onClick={() => setActiveSection("settings")}
                             className="bg-amber-600 text-white hover:bg-amber-700"
                           >
-                            {isUpdatingPassword ? "Updating..." : "Reset Password"}
+                            Open Settings
                           </Button>
+                          <p className="text-sm text-amber-800">
+                            You will be asked to enter your new password twice.
+                          </p>
                         </div>
-                        {passwordError && <p className="mt-2 text-sm text-red-600">{passwordError}</p>}
                       </div>
                     </div>
                   </Card>
                 )}
+                {userData.mustResetPassword && passwordSettingsForm}
                 {/* Welcome */}
                 <Card className="p-6 bg-gradient-to-r from-[#023859] to-[#26658c] text-white">
                   <h2 className="text-2xl font-bold mb-2">Welcome back, {userData.name}!</h2>
@@ -432,7 +663,7 @@ export function Dashboard() {
                 </Card>
 
                 {/* Current BMI */}
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid gap-6">
                   <Card className="p-6 glass-card">
                     <h3 className="text-lg font-semibold text-[#023859] mb-4 flex items-center gap-2">
                       <Heart className="w-5 h-5 text-[#54acbf]" /> Current BMI
@@ -448,29 +679,40 @@ export function Dashboard() {
                       </div>
                     </div>
                   </Card>
+                </div>
 
-                  {/* Weight & Height */}
-                  <div className="space-y-4">
-                    {[
-                      { icon: <Scale className="w-6 h-6 text-[#54acbf]" />, label: "Weight", value: `${userData.weight} kg` },
-                      { icon: <Ruler className="w-6 h-6 text-[#26658c]" />, label: "Height", value: `${userData.height} cm` },
-                    ].map((item, idx) => (
-                      <Card key={idx} className="p-6 glass-card">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="p-3 bg-[#a7ebf2]/20 rounded-lg">{item.icon}</div>
-                          <div className="flex-1">
-                            <p className="text-sm text-[#026658c]/70">{item.label}</p>
-                            <p className="text-2xl font-bold text-[#023859]">{item.value}</p>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
+                {/* Weight & Height */}
+                <div className="mt-6 flex flex-col gap-3 rounded-lg border border-[#54acbf]/20 bg-white/70 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-[#023859]">Measurement Units</p>
+                    <p className="text-sm text-[#026658c]/70">Choose how weight and height are shown.</p>
                   </div>
+                  {unitToggle}
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    { icon: <Scale className="w-6 h-6 text-[#54acbf]" />, label: "Weight", value: formatWeight(userData.weight, weightUnit) },
+                    { icon: <Ruler className="w-6 h-6 text-[#26658c]" />, label: "Height", value: formatHeight(userData.height, heightUnit) },
+                  ].map((item, idx) => (
+                    <Card key={idx} className="p-6 glass-card">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="p-3 bg-[#a7ebf2]/20 rounded-lg">{item.icon}</div>
+                        <div className="flex-1">
+                          <p className="text-sm text-[#026658c]/70">{item.label}</p>
+                          <p className="text-2xl font-bold text-[#023859]">{item.value}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
 
                 {/* History & Tips */}
                 <BMIHistoryChart data={userData.history} />
-                <HealthTips category={category.label} />
+                <HealthTips
+                  category={category.label}
+                  bmi={userData.currentBMI}
+                  history={userData.history}
+                />
               </motion.div>
             )}
 
@@ -478,22 +720,25 @@ export function Dashboard() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
                 {/* Profile Section */}
                 <Card className="p-8 glass-card space-y-6">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col gap-4 mb-6 lg:flex-row lg:items-center lg:justify-between">
                     <h2 className="text-2xl font-bold text-[#023859]">Profile Information</h2>
-                    {!isEditingProfile ? (
-                      <Button onClick={() => setIsEditingProfile(true)} variant="outline" className="border-[#54acbf] text-[#54acbf] hover:bg-[#54acbf] hover:text-white">
-                        <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
-                      </Button>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Button onClick={handleSaveProfile} className="bg-[#54acbf] hover:bg-[#26658c] text-white">
-                          <Save className="w-4 h-4 mr-2" /> Save
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      {unitToggle}
+                      {!isEditingProfile ? (
+                        <Button onClick={() => setIsEditingProfile(true)} variant="outline" className="border-[#54acbf] text-[#54acbf] hover:bg-[#54acbf] hover:text-white">
+                          <Edit2 className="w-4 h-4 mr-2" /> Edit Profile
                         </Button>
-                        <Button onClick={() => { setIsEditingProfile(false); setEditedName(userData.name); setEditedAge(userData.age ? String(userData.age) : ""); }} variant="outline" className="border-[#d4183d] text-[#d4183d] hover:bg-[#d4183d] hover:text-white">
-                          <X className="w-4 h-4 mr-2" /> Cancel
-                        </Button>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button onClick={handleSaveProfile} className="bg-[#54acbf] hover:bg-[#26658c] text-white">
+                            <Save className="w-4 h-4 mr-2" /> Save
+                          </Button>
+                          <Button onClick={() => { setIsEditingProfile(false); setEditedName(userData.name); setEditedAge(userData.age ? String(userData.age) : ""); }} variant="outline" className="border-[#d4183d] text-[#d4183d] hover:bg-[#d4183d] hover:text-white">
+                            <X className="w-4 h-4 mr-2" /> Cancel
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
@@ -502,8 +747,8 @@ export function Dashboard() {
                       { label: "User ID", value: userData.id },
                       { label: "Age", value: `${userData.age} years`, editable: "age" },
                       { label: "Sex", value: userData.sex || "-" },
-                      { label: "Current Weight", value: `${userData.weight} kg` },
-                      { label: "Current Height", value: `${userData.height} cm` },
+                      { label: "Current Weight", value: formatWeight(userData.weight, weightUnit) },
+                      { label: "Current Height", value: formatHeight(userData.height, heightUnit) },
                     ].map((field, idx) => (
                       <div key={idx}>
                         <Label className="text-[#026658c]">{field.label}</Label>
@@ -532,6 +777,30 @@ export function Dashboard() {
                       </p>
                     </div>
                   </div>
+
+                  <div className="rounded-lg border border-[#54acbf]/20 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-lg bg-[#54acbf]/15 p-3">
+                          <ShieldCheck className="h-5 w-5 text-[#54acbf]" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-[#023859]">Password Reset</p>
+                          <p className="text-sm text-[#026658c]/80">
+                            Change your password here. You only need to enter the new password and confirm it.
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => setActiveSection("settings")}
+                        className="bg-[#54acbf] text-white hover:bg-[#26658c]"
+                      >
+                        Open Password Settings
+                      </Button>
+                    </div>
+                  </div>
+
+                  {passwordSettingsForm}
                 </Card>
               </motion.div>
             )}
@@ -547,21 +816,36 @@ export function Dashboard() {
                 <Card className="p-6 glass-card">
                   <div className="mb-6 flex items-center justify-between gap-4">
                     <h2 className="text-2xl font-bold text-[#023859]">BMI History Records</h2>
-                    <Button
-                      onClick={handleDownloadCopy}
-                      disabled={isDownloadingCopy || !userData.history.length}
-                      className="bg-[#54acbf] hover:bg-[#26658c] text-white"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      {isDownloadingCopy ? "Preparing..." : "Get a copy"}
-                    </Button>
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                      {unitToggle}
+                      <Button
+                        onClick={handleDownloadCopy}
+                        disabled={isDownloadingCopy || !userData.history.length}
+                        className="bg-[#54acbf] hover:bg-[#26658c] text-white"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        {isDownloadingCopy ? "Preparing..." : "Get a copy"}
+                      </Button>
+                      <Button
+                        onClick={handleGenerateCertificate}
+                        disabled={isGeneratingCertificate || !userData.history.length}
+                        className="bg-[#023859] hover:bg-[#26658c] text-white"
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        {isGeneratingCertificate ? "Generating..." : "Generate BMI Certificate"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="space-y-3">
+                    {historyMessage && (
+                      <p className="text-sm text-[#26658c]">{historyMessage}</p>
+                    )}
                     {userData.history.map((record, idx) => {
                       const cat = getBMICategory(record.bmi);
+                      const isDeleting = isDeletingHistoryId === record.id;
                       return (
                         <div
-                          key={idx}
+                          key={record.id || idx}
                           className="flex items-center justify-between p-4 bg-[#a7ebf2]/5 rounded-lg border border-[#54acbf]/10 hover:bg-[#a7ebf2]/10 transition-colors"
                         >
                           <div className="flex items-center gap-4">
@@ -576,23 +860,72 @@ export function Dashboard() {
                             </div>
                             <div className="text-center">
                               <p className="text-sm text-[#026658c]/70">Weight</p>
-                              <p className="font-semibold text-[#023859]">{record.weight} kg</p>
+                              <p className="font-semibold text-[#023859]">{formatWeight(record.weight, weightUnit)}</p>
                             </div>
                             <div className="text-center">
                               <p className="text-sm text-[#026658c]/70">Height</p>
-                              <p className="font-semibold text-[#023859]">{record.height} cm</p>
+                              <p className="font-semibold text-[#023859]">{formatHeight(record.height, heightUnit)}</p>
                             </div>
                           </div>
                           <div
-                            className="px-4 py-2 rounded-full text-sm font-semibold"
-                            style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
+                            className="flex items-center gap-3"
                           >
-                            {cat.label}
+                            <div
+                              className="px-4 py-2 rounded-full text-sm font-semibold"
+                              style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
+                            >
+                              {cat.label}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => handleDeleteHistoryRecord(record.id)}
+                              disabled={isDeleting}
+                              className="border-[#d4183d]/30 text-[#d4183d] hover:bg-[#d4183d] hover:text-white"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {isDeleting ? "Deleting..." : "Delete"}
+                            </Button>
                           </div>
                         </div>
                       );
                     })}
                   </div>
+                </Card>
+              </motion.div>
+            )}
+
+            {activeSection === "settings" && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <Card className="p-8 glass-card">
+                  <div className="mb-6 flex items-center gap-3">
+                    <div className="rounded-lg bg-[#54acbf]/15 p-3">
+                      <ShieldCheck className="h-6 w-6 text-[#54acbf]" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-[#023859]">Security Settings</h2>
+                      <p className="text-[#026658c]/70">
+                        Update your account password here. Enter the same new password twice to confirm it.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mb-6 grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className="text-[#026658c]">User ID</Label>
+                      <Input value={userData.id} disabled className="bg-[#f0f9fa]" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[#026658c]">Password Status</Label>
+                      <Input
+                        value={userData.mustResetPassword ? "Reset required" : "Password already updated"}
+                        disabled
+                        className="bg-[#f0f9fa]"
+                      />
+                    </div>
+                  </div>
+
+                  {passwordSettingsForm}
                 </Card>
               </motion.div>
             )}
