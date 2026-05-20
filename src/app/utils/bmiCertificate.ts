@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import jsPDF, { GState } from "jspdf";
 import { getHealthAdviceContent } from "../components/HealthTips";
 
 type WeightUnit = "kg" | "lb";
@@ -101,6 +101,7 @@ function ensureSpace(doc: jsPDF, y: number, needed: number) {
   }
 
   doc.addPage();
+  addWatermarkLogo(doc);
   return page.margin;
 }
 
@@ -148,13 +149,15 @@ function addWatermarkLogo(doc: jsPDF) {
   const centerX = page.width / 2 - 42;
   const centerY = 146;
 
-  doc.setDrawColor(226, 247, 250);
-  doc.setLineWidth(3.2);
+  doc.setGState(new GState({ opacity: 0.08, "stroke-opacity": 0.08 }));
+  doc.setDrawColor(2, 56, 89);
+  doc.setLineWidth(4);
   doc.line(centerX, centerY, centerX + 18, centerY);
   doc.line(centerX + 18, centerY, centerX + 28, centerY - 24);
   doc.line(centerX + 28, centerY - 24, centerX + 48, centerY + 34);
   doc.line(centerX + 48, centerY + 34, centerX + 64, centerY);
   doc.line(centerX + 64, centerY, centerX + 84, centerY);
+  doc.setGState(new GState({ opacity: 1, "stroke-opacity": 1 }));
 }
 
 function addLabeledParagraph(
@@ -242,7 +245,6 @@ function addFooter(doc: jsPDF) {
   const pageCount = doc.getNumberOfPages();
   for (let index = 1; index <= pageCount; index += 1) {
     doc.setPage(index);
-    addWatermarkLogo(doc);
     doc.setDrawColor(84, 172, 191);
     doc.line(page.margin, 280, page.width - page.margin, 280);
     doc.setFont("helvetica", "normal");
@@ -266,6 +268,8 @@ export function generateBMICertificate(options: BMICertificateOptions) {
   const analytics = calculateAnalytics(history);
   const advice = getHealthAdviceContent(category.label, latestBMI, history);
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  addWatermarkLogo(doc);
 
   doc.setFillColor(2, 56, 89);
   doc.rect(0, 0, page.width, 32, "F");
